@@ -4,8 +4,6 @@ import inspect
 import os
 import subprocess
 
-VERBOSITY = 1
-
 
 # copy/paste from pywal.util with slight modification
 def disown(*cmd):
@@ -85,15 +83,9 @@ class _NoneRepr:
 _none_repr = _NoneRepr()
 
 
-def rich_message(*values, beginning=None, label=None, sep=None, urgency=0,
+def rich_message(*values, beginning=None, label=None, sep=None,
                  **print_kwargs):
-    """{beginning}{label}{value}{sep}{value}{sep}{value}{end} > file
-
-    higher urgency level -> lower verbosity requred
-    set urgency in 0, 1, or 2, or a negative number for absolute urgency"""
-    if 2 - VERBOSITY - urgency < 0 and urgency >= 0:
-        return
-
+    """{beginning}{label}{value}{sep}{value}{sep}{value}{end} > file"""
     if not __debug__:
         kwargs = {'beginning': beginning, 'label': label, 'sep': sep,
                   **print_kwargs}

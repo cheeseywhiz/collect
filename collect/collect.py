@@ -27,12 +27,12 @@ def random_map(func, *iterables):
 
 @util.partial(
     util.rich_message, beginning=pathlib.Path(__file__).name + ': ',
-    file=sys.stderr, urgency=1)
+    file=sys.stderr)
 def log(*args, **kwargs):
     pass
 
 
-@util.partial(log, label='Error: ', urgency=2)
+@util.partial(log, label='Error: ')
 def error(*args, **kwargs):
     pass
 

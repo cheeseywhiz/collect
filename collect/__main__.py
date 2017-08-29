@@ -33,6 +33,9 @@ def get_args(argv):
 
     args = arg.parse_args(argv)
 
+    if args.v is None:
+        args.v = 0
+
     if len(argv) == 1 and args.v or not len(argv):
         arg.parse_args(['-h'])
     else:
