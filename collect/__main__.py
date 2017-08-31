@@ -25,25 +25,18 @@ def get_args(argv):
     arg.add_argument(
         '-u', default=REDDIT_LINK, metavar='URL',
         help=(
-            'Set the URL for the Reddit source. Must be .json format. '
+            'Set the URL for the Reddit json api. '
             f'Default {REDDIT_LINK}'))
-    arg.add_argument(
-        '-v', action='count',
-        help='Add verbosity')
-
     args = arg.parse_args(argv)
 
-    if args.v is None:
-        args.v = 0
-
-    if len(argv) == 1 and args.v or not len(argv):
-        arg.parse_args(['-h'])
+    if not argv:
+        arg.print_usage(file=sys.stderr)
+        sys.exit(1)
     else:
         return args
 
 
 def process_args(args):
-    collect.util.VERBOSITY = args.v
     collect.download.load_cache(path=args.c)
     return collect.collect(args.s, args.u)
 

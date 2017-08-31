@@ -1,0 +1,6 @@
+#!/bin/bash
+
+CACHE_DIR=$HOME/.cache/collect
+mkdir -p $CACHE_DIR
+rm -rf $CACHE_DIR/img
+ln -s /tmp/wal $CACHE_DIR/img

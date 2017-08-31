@@ -7,8 +7,8 @@ from urllib.parse import urlparse
 
 import requests
 
-from . import util
 from . import cache
+from . import util
 from . import CACHE_PATH, REDDIT_LINK, SAVE_DIR
 
 
@@ -26,7 +26,7 @@ def random_map(func, *iterables):
 
 
 @util.partial(
-    util.rich_message, beginning=pathlib.Path(__file__).name + ': ',
+    util.rich_message, beginning='collect: ',
     file=sys.stderr)
 def log(*args, **kwargs):
     pass
