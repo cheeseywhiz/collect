@@ -1,7 +1,6 @@
 """Provides functions for downloading images"""
 import pathlib
 import random
-import sys
 import time
 from urllib.parse import urlparse
 
@@ -9,38 +8,21 @@ import requests
 
 from . import cache
 from . import util
+from . import logging
 from . import CACHE_PATH, REDDIT_LINK, SAVE_DIR
 
 
 def random_map(func, *iterables):
     """Implement map() by sending in arguments in a random order"""
-    if len(iterables) == 1:
-        args = zip(iterables[0])
-    else:
-        args = zip(*iterables)
-
-    args = list(args)
+    args = list(zip(*iterables))
     random.shuffle(args)
-
     return map(func, *zip(*args))
-
-
-@util.partial(
-    util.rich_message, beginning='collect: ',
-    file=sys.stderr)
-def log(*args, **kwargs):
-    pass
-
-
-@util.partial(log, label='Error: ')
-def error(*args, **kwargs):
-    pass
 
 
 @util.partial(requests.get, headers={'User-Agent': 'u/cheeseywhiz'})
 def get(url, *args, **kwargs):
-    yield log('Requesting', url, '...', end=' ')
-    yield lambda req: log(req.status_code, req.reason, beginning='')
+    yield
+    yield lambda req: logging.debug('Reason: %s', req.reason)
 
 
 @cache.cache(path=CACHE_PATH)
@@ -70,7 +52,8 @@ def write_image(download_result, path):
     path = pathlib.Path(path)
 
     if path.exists():
-        return download_result._replace(status='Already downloaded')
+        return download_result._replace(
+            status='Already downloaded; not re-writing')
 
     with path.open('wb') as file:
         file.write(download_result.content)
@@ -91,15 +74,15 @@ def collect(save_dir=None, url=None):
 
     for n_try in range(max_seconds // seconds_wait):
         if not util.ping():
-            error('Connection not found')
+            logging.warning('Connection not found')
             time.sleep(seconds_wait)
         elif n_try:
-            log('Connection found')
+            logging.info('Connection found')
             break
         else:
             break
     else:  # no break; really no internet connection
-        error('Too many tries')
+        logging.warning('Too many tries')
         return 1
 
     save_dir = pathlib.Path(save_dir)
@@ -112,17 +95,18 @@ def collect(save_dir=None, url=None):
     with download.saving():
         for res in random_map(download, urls.keys()):
             if not res.succeeded:
-                error(res.status, res.url, sep=': ')
+                logging.debug('%s: %s', res.status, res.url)
                 continue
             post = urls[res.url]
             path = save_dir / res.fname
             res = write_image(res, path)
-            log(res.status)
-            log(res.url, label='URL: ')
-            log(post['title'], label='Title: ')
-            log(path, label='File: ')
+            logging.debug(res.status)
+            logging.info('Post: %s', post['permalink'])
+            logging.info('Title: %s', post['title'])
+            logging.info('Image: %s', res.url)
+            logging.info('File: %s', path)
             print(path)
             return 0
         else:  # no break; did not succeed
-            error('Could not find image')
+            logging.error('Could not find image')
             return 1

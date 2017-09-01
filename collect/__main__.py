@@ -2,9 +2,25 @@
 import argparse
 import os
 import sys
-from . import __doc__
-from . import CACHE_PATH, REDDIT_LINK, SAVE_DIR
+import logging
+from . import CACHE_PATH, REDDIT_LINK, SAVE_DIR, __doc__ as description
 from . import collect
+
+
+def parse_v_flag(value):
+    if isinstance(value, int):
+        if value > 2:
+            value = 2
+        elif value < 1:
+            value = None
+
+    log_level = {
+        None: logging.WARNING,
+        1: logging.INFO,
+        2: logging.DEBUG
+    }[value]
+
+    collect.logging.root.setLevel(log_level)
 
 
 def path_type(path):
@@ -12,7 +28,7 @@ def path_type(path):
 
 
 def get_args(argv):
-    arg = argparse.ArgumentParser(description=__doc__)
+    arg = argparse.ArgumentParser(description=description)
     arg.add_argument(
         '-c', default=CACHE_PATH, metavar='PATH', type=path_type,
         help=f'Set the pickle cache path. Default {CACHE_PATH}')
@@ -25,11 +41,17 @@ def get_args(argv):
     arg.add_argument(
         '-u', default=REDDIT_LINK, metavar='URL',
         help=(
-            'Set the URL for the Reddit json api. '
+            'Set the URL for the Reddit json API. '
             f'Default {REDDIT_LINK}'))
+    arg.add_argument(
+        '-v', action='count',
+        help='Output more information. -vv for even more.')
     args = arg.parse_args(argv)
 
-    if not argv:
+    options = args.c, args.s, args.u
+    defaults = CACHE_PATH, SAVE_DIR, REDDIT_LINK
+
+    if options == defaults and not args.d:
         arg.print_usage(file=sys.stderr)
         sys.exit(1)
     else:
@@ -37,6 +59,7 @@ def get_args(argv):
 
 
 def process_args(args):
+    parse_v_flag(args.v)
     collect.download.load_cache(path=args.c)
     return collect.collect(args.s, args.u)
 
