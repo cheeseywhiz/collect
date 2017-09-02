@@ -7,4 +7,4 @@ uninstall:
 	@cat files.txt | xargs rm -rf
 
 clean:
-	@rm -rf build *.egg-info dist **/__pycache__ files.txt
+	@rm -rf build *.egg-info dist **/__pycache__

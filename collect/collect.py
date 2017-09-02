@@ -1,15 +1,17 @@
 """Provides functions for downloading images"""
+import functools
 import pathlib
 import random
 import time
-from urllib.parse import urlparse
 
 import requests
 
 from . import cache
 from . import util
 from . import logging
-from . import CACHE_PATH, REDDIT_LINK, SAVE_DIR
+from .config import PICKLE_PATH, REDDIT_LINK, IMG_DIR
+
+__all__ = ['random_map', 'get', 'download', 'ensure_download', 'collect']
 
 
 def random_map(func, *iterables):
@@ -25,47 +27,67 @@ def get(url, *args, **kwargs):
     yield lambda req: logging.debug('Reason: %s', req.reason)
 
 
-@cache.cache(path=CACHE_PATH)
-def download(url):
-    """Download an image and return cache.DownloadResult with relevant info"""
+@cache.cache(path=PICKLE_PATH)
+def download(url, img_dir):
+    """Download an image and return cache.DownloadResult with relevant info."""
+    # cache.DownloadResult(
+    #   url: str, time: int, invalid: bool, message: str, path: pathlib.Path)
     req = get(url)
     time_ = int(time.time())
 
     error_msg = None
-    type_ = req.headers['content-type']
-    if not type_.startswith('image'):
+    content_type = req.headers['content-type']
+    if not content_type.startswith('image'):
         error_msg = 'Not an image'
-    if type_.endswith('gif'):
+    if content_type.endswith('gif'):
         error_msg = 'Is a .gif'
     if 'removed' in req.url:
         error_msg = 'Appears to be removed'
     if error_msg:
-        return cache.DownloadResult(url, time_, False, error_msg, None, None)
+        return cache.DownloadResult(url, time_, True, error_msg, None)
 
-    fname = urlparse(req.url).path.split('/')[-1]
-    return cache.DownloadResult(
-        url, time_, True, 'Collected new image', fname, req.content)
-
-
-def write_image(download_result, path):
-    """Write an image to disk given a download() response and a full path"""
-    path = pathlib.Path(path)
-
-    if path.exists():
-        return download_result._replace(
-            status='Already downloaded; not re-writing')
+    path = util.url_make_path(url, img_dir)
+    result = cache.DownloadResult(
+        url, time_, False, 'Collected new image', path)
 
     with path.open('wb') as file:
-        file.write(download_result.content)
+        file.write(req.content)
 
-    return download_result
+    return result
 
 
-def collect(save_dir=None, url=None):
+def ensure_download(url, img_dir=None):
+    """Ensure that the image is downloaded if it is still cached."""
+    download_args = url, img_dir
+    path_guess = util.url_make_path(*download_args)
+    key_guess = download.key(*download_args)
+
+    if path_guess.is_file():
+        on_disk_before = True
+    else:
+        on_disk_before = False
+
+    if key_guess in download.cache.keys():
+        cached_before = True
+    else:
+        cached_before = False
+
+    with download.saving():
+        result = download(*download_args)
+        if result.invalid or not cached_before:
+            return result
+        elif on_disk_before:
+            return result._replace(message='Already downloaded')
+        else:
+            download.cache.pop(key_guess)
+            return download(*download_args)
+
+
+def collect(img_dir=None, url=None):
     """Download a random image from a Reddit .json url and save it in the given
     folder path."""
-    if save_dir is None:
-        save_dir = SAVE_DIR
+    if img_dir is None:
+        img_dir = IMG_DIR
     if url is None:
         url = REDDIT_LINK
 
@@ -85,28 +107,26 @@ def collect(save_dir=None, url=None):
         logging.warning('Too many tries')
         return 1
 
-    save_dir = pathlib.Path(save_dir)
-    save_dir.mkdir(exist_ok=True)
+    img_dir = pathlib.Path(img_dir)
+    img_dir.mkdir(exist_ok=True)
+    ensure_download_ = functools.partial(ensure_download, img_dir=str(img_dir))
 
     urls = {
         post['data']['url']: post['data']
         for post in get(url).json()['data']['children']}
 
-    with download.saving():
-        for res in random_map(download, urls.keys()):
-            if not res.succeeded:
-                logging.debug('%s: %s', res.status, res.url)
-                continue
-            post = urls[res.url]
-            path = save_dir / res.fname
-            res = write_image(res, path)
-            logging.debug(res.status)
-            logging.info('Post: %s', post['permalink'])
-            logging.info('Title: %s', post['title'])
-            logging.info('Image: %s', res.url)
-            logging.info('File: %s', path)
-            print(path)
-            return 0
-        else:  # no break; did not succeed
-            logging.error('Could not find image')
-            return 1
+    for res in random_map(ensure_download_, urls.keys()):
+        if res.invalid:
+            logging.debug('%s: %s', res.message, res.url)
+            continue
+        post = urls[res.url]
+        logging.debug(res.message)
+        logging.info('Post: %s', post['permalink'])
+        logging.info('Title: %s', post['title'])
+        logging.info('Image: %s', res.url)
+        logging.info('File: %s', res.path)
+        print(res.path)
+        return 0
+    else:  # no break; did not succeed
+        logging.error('Could not find image')
+        return 1

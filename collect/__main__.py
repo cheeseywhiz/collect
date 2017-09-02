@@ -3,8 +3,9 @@ import argparse
 import os
 import sys
 import logging
-from . import CACHE_PATH, REDDIT_LINK, SAVE_DIR, __doc__ as description
-from . import collect
+
+from .config import PICKLE_PATH, REDDIT_LINK, IMG_DIR
+from . import collect, __doc__ as description
 
 
 def parse_v_flag(value):
@@ -30,14 +31,14 @@ def path_type(path):
 def get_args(argv):
     arg = argparse.ArgumentParser(description=description)
     arg.add_argument(
-        '-c', default=CACHE_PATH, metavar='PATH', type=path_type,
-        help=f'Set the pickle cache path. Default {CACHE_PATH}')
+        '-c', default=PICKLE_PATH, metavar='PATH', type=path_type,
+        help=f'Set the pickle cache path. Default {PICKLE_PATH}')
     arg.add_argument(
         '-d', action='store_true',
         help='Verify using all defaults')
     arg.add_argument(
-        '-s', default=SAVE_DIR, metavar='PATH', type=path_type,
-        help=f'Set the image save path. Default {SAVE_DIR}')
+        '-s', default=IMG_DIR, metavar='PATH', type=path_type,
+        help=f'Set the image save path. Default {IMG_DIR}')
     arg.add_argument(
         '-u', default=REDDIT_LINK, metavar='URL',
         help=(
@@ -49,7 +50,7 @@ def get_args(argv):
     args = arg.parse_args(argv)
 
     options = args.c, args.s, args.u
-    defaults = CACHE_PATH, SAVE_DIR, REDDIT_LINK
+    defaults = PICKLE_PATH, IMG_DIR, REDDIT_LINK
 
     if options == defaults and not args.d:
         arg.print_usage(file=sys.stderr)

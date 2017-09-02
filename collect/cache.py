@@ -6,15 +6,11 @@ import pickle
 
 from . import util
 
-_new_named_tuple_repr = """\
-    def __repr__(self):
-        module = self.__class__.__module__
-        return f'<{{module}}.{typename} object at {{hex(id(self))}}>'
-"""
-collections._class_template = collections._class_template.replace(
-    '    def __repr__(self):', _new_named_tuple_repr)
+__all__ = [
+    'DownloadResult', 'make_repr', 'PickleIO', 'CacheFunc', 'Cache', 'cache']
+
 DownloadResult = collections.namedtuple('DownloadResult', (
-    'url', 'time', 'succeeded', 'status', 'fname', 'content'))
+    'url', 'time', 'invalid', 'message', 'path'))
 
 
 def make_repr(cls, *args, **kwargs):
@@ -73,14 +69,23 @@ class CacheFunc:
             self.cache.update(cache)
 
     def __call__(self, *args, **kwargs):
-        key = functools._make_key(args, kwargs, False)
+        key = self.key(*args, **kwargs)
 
         try:
             result = self.cache[key]
         except KeyError:
             result = self.cache[key] = self.func(*args, **kwargs)
-        finally:
-            return result
+
+        return result
+
+    def key(self, *args, **kwargs):
+        """Return a hashable representation of the given args and kwargs."""
+        return functools._make_key(args, kwargs, False)
+
+    def remove(self, *args, **kwargs):
+        """Remove the given function call from the cache."""
+        key = self.key(*args, **kwargs)
+        return self.cache.pop(key)
 
     def __repr__(self):
         kwargs = util.filter_dict(
@@ -120,7 +125,9 @@ class Cache(PickleIO, CacheFunc):
         # using self.cache to invoke loading and self._cache otherwise
         if not self._loaded and self._path_arg:
             self._loaded = True
-            self._cache.update(self.read())
+            self._cache.update(
+                (functools._HashedSeq(tuple(name.copy())), value)
+                for name, value in self.read())
 
         return self._cache
 
@@ -138,8 +145,8 @@ class Cache(PickleIO, CacheFunc):
             self.save()
 
     def save(self):
-        """Save the cache to the specified file"""
-        return super().write(self.cache)
+        """Save the cache to the specified file."""
+        return super().write(list(self.cache.items()))
 
     def re_init_cache(self):
         """Reinit the file and currently loaded cache."""

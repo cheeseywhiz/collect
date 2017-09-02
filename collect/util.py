@@ -2,7 +2,11 @@
 import functools
 import inspect
 import os
+import pathlib
 import subprocess
+from urllib.parse import urlparse
+
+__all__ = ['disown', 'ping', 'url_make_path', 'filter_dict', 'partial']
 
 
 # copy/paste from pywal.util with slight modification
@@ -18,6 +22,10 @@ def disown(*cmd):
 def ping(ip_address='8.8.8.8'):
     """Internet connection test"""
     return not disown('ping', '-c 1', '-w 1', ip_address).wait()
+
+
+def url_make_path(url, img_dir):
+    return pathlib.Path(img_dir) / urlparse(url).path.split('/')[-1]
 
 
 def filter_dict(__func, *args, **kwargs):
@@ -42,10 +50,9 @@ for name in _removed:
 
 @functools.wraps(functools.partial, assigned=_no_doc_module)
 def partial(func, *args, **kwargs):
-    """partial(func, *args, **kwargs)
-    functools.partial as a decorator for top level functions.
-    Able to wrap itself with 0-2 yield statements where the second yields a
-    function that takes the result as an argument."""
+    """functools.partial as a decorator for top level functions. Able to wrap
+    itself with 0-2 yield statements where the second yields a function that
+    takes the result as an argument."""
     partial_func = functools.partial(func, *args, **kwargs)
     func_sig = inspect.signature(partial_func)
 
