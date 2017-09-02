@@ -1,11 +1,12 @@
 """Entry point for command line script."""
 import argparse
-import os
 import sys
 import logging
 
+from . import collect
+from . import util
+from . import __doc__ as description
 from .config import PICKLE_PATH, REDDIT_LINK, IMG_DIR
-from . import collect, __doc__ as description
 
 
 def parse_v_flag(value):
@@ -18,26 +19,22 @@ def parse_v_flag(value):
     log_level = {
         None: logging.WARNING,
         1: logging.INFO,
-        2: logging.DEBUG
+        2: logging.DEBUG,
     }[value]
 
     collect.logging.root.setLevel(log_level)
 
 
-def path_type(path):
-    return os.path.abspath(os.path.expanduser(path))
-
-
 def get_args(argv):
     arg = argparse.ArgumentParser(description=description)
     arg.add_argument(
-        '-c', default=PICKLE_PATH, metavar='PATH', type=path_type,
+        '-c', default=PICKLE_PATH, metavar='PATH', type=util.path_type,
         help=f'Set the pickle cache path. Default {PICKLE_PATH}')
     arg.add_argument(
         '-d', action='store_true',
         help='Verify using all defaults')
     arg.add_argument(
-        '-s', default=IMG_DIR, metavar='PATH', type=path_type,
+        '-s', default=IMG_DIR, metavar='PATH', type=util.path_type,
         help=f'Set the image save path. Default {IMG_DIR}')
     arg.add_argument(
         '-u', default=REDDIT_LINK, metavar='URL',
@@ -62,7 +59,7 @@ def get_args(argv):
 def process_args(args):
     parse_v_flag(args.v)
     collect.download.load_cache(path=args.c)
-    return collect.collect(args.s, args.u)
+    collect.collect(args.s, args.u)
 
 
 def main(argv=None):
@@ -72,4 +69,4 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     args = get_args(argv)
-    sys.exit(process_args(args))
+    process_args(args)

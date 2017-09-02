@@ -8,7 +8,8 @@ import subprocess
 from urllib.parse import urlparse
 
 __all__ = [
-    'disown', 'ping', 'url_make_path', 'random_map', 'filter_dict', 'partial']
+    'disown', 'ping', 'url_make_path', 'path_type', 'random_map',
+    'filter_dict', 'partial']
 
 
 # copy/paste from pywal.util with slight modification
@@ -30,6 +31,11 @@ def url_make_path(url, dir):
     """Return pathlib.Path object for a new downloaded file in the
     directory."""
     return pathlib.Path(dir) / urlparse(url).path.split('/')[-1]
+
+
+def path_type(path):
+    """Apply both os.path.abspath and os.path.expanduser to the path."""
+    return os.path.abspath(os.path.expanduser(path))
 
 
 def random_map(func, *iterables):

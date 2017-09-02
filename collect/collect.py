@@ -96,8 +96,7 @@ def collect(img_dir=None, url=None):
         else:
             break
     else:  # no break; really no internet connection
-        logging.warning('Too many tries')
-        return 1
+        raise RuntimeError('Could not connect to the internet')
 
     img_dir = pathlib.Path(img_dir)
     img_dir.mkdir(exist_ok=True)
@@ -118,7 +117,6 @@ def collect(img_dir=None, url=None):
         logging.info('Image: %s', res.url)
         logging.info('File: %s', res.path)
         print(res.path)
-        return 0
+        return
     else:  # no break; did not succeed
-        logging.error('Could not find image')
-        return 1
+        raise RuntimeError('Could not find image')
