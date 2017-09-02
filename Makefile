@@ -1,4 +1,4 @@
-all: clean install
+all: clean
 
 install:
 	@python setup.py install --record files.txt

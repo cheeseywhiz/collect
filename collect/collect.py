@@ -1,7 +1,6 @@
 """Provides functions for downloading images"""
 import functools
 import pathlib
-import random
 import time
 
 import requests
@@ -11,14 +10,7 @@ from . import util
 from . import logging
 from .config import PICKLE_PATH, REDDIT_LINK, IMG_DIR
 
-__all__ = ['random_map', 'get', 'download', 'ensure_download', 'collect']
-
-
-def random_map(func, *iterables):
-    """Implement map() by sending in arguments in a random order"""
-    args = list(zip(*iterables))
-    random.shuffle(args)
-    return map(func, *zip(*args))
+__all__ = ['get', 'download', 'ensure_download', 'collect']
 
 
 @util.partial(requests.get, headers={'User-Agent': 'u/cheeseywhiz'})
@@ -115,7 +107,7 @@ def collect(img_dir=None, url=None):
         post['data']['url']: post['data']
         for post in get(url).json()['data']['children']}
 
-    for res in random_map(ensure_download_, urls.keys()):
+    for res in util.random_map(ensure_download_, urls.keys()):
         if res.invalid:
             logging.debug('%s: %s', res.message, res.url)
             continue

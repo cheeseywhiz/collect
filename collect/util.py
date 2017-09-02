@@ -3,10 +3,12 @@ import functools
 import inspect
 import os
 import pathlib
+import random
 import subprocess
 from urllib.parse import urlparse
 
-__all__ = ['disown', 'ping', 'url_make_path', 'filter_dict', 'partial']
+__all__ = [
+    'disown', 'ping', 'url_make_path', 'random_map', 'filter_dict', 'partial']
 
 
 # copy/paste from pywal.util with slight modification
@@ -24,8 +26,17 @@ def ping(ip_address='8.8.8.8'):
     return not disown('ping', '-c 1', '-w 1', ip_address).wait()
 
 
-def url_make_path(url, img_dir):
-    return pathlib.Path(img_dir) / urlparse(url).path.split('/')[-1]
+def url_make_path(url, dir):
+    """Return pathlib.Path object for a new downloaded file in the
+    directory."""
+    return pathlib.Path(dir) / urlparse(url).path.split('/')[-1]
+
+
+def random_map(func, *iterables):
+    """Implement map() by sending in arguments in a random order"""
+    args = list(zip(*iterables))
+    random.shuffle(args)
+    return map(func, *zip(*args))
 
 
 def filter_dict(__func, *args, **kwargs):
