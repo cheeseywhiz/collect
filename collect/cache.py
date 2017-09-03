@@ -4,22 +4,13 @@ import contextlib
 import functools
 import pickle
 
+from . import logging
 from . import util
 
-__all__ = [
-    'DownloadResult', 'make_repr', 'PickleIO', 'CacheFunc', 'Cache', 'cache']
+__all__ = ['cache', 'Cache', 'CacheFunc', 'DownloadResult', 'PickleIO']
 
 DownloadResult = collections.namedtuple('DownloadResult', (
-    'url', 'time', 'invalid', 'message', 'path'))
-
-
-def make_repr(cls, *args, **kwargs):
-    """Format a repr from args and kwargs and a class instance."""
-    name = '.'.join((cls.__module__, cls.__name__))
-    parts = list(map(repr, args))
-    parts.extend(f'{name}={value !r}' for name, value in kwargs.items())
-
-    return f"{name}({', '.join(parts)})"
+    'url', 'invalid', 'message', 'path'))
 
 
 class PickleIO:
@@ -49,11 +40,15 @@ class PickleIO:
 
     def re_init_cache(self):
         """Reinitialize the cache file."""
+        logging.debug('Clearing cache at %s', self.path)
+
         for cmd in 'rm', 'touch':
             util.disown(cmd, self.path)
 
+        return self
+
     def __repr__(self):
-        return make_repr(self.__class__, path=self.path)
+        return util.make_repr(self.__class__, path=self.path)
 
 
 class CacheFunc:
@@ -89,9 +84,9 @@ class CacheFunc:
 
     def __repr__(self):
         kwargs = util.filter_dict(
-            lambda n, v: v is not None,
+            lambda k, v: v is not None,
             func=self.func, cache=self.cache)
-        return make_repr(self.__class__, self.func, **kwargs)
+        return util.make_repr(self.__class__, self.func, **kwargs)
 
 
 class Cache(PickleIO, CacheFunc):
@@ -126,8 +121,8 @@ class Cache(PickleIO, CacheFunc):
         if not self._loaded and self._path_arg:
             self._loaded = True
             self._cache.update(
-                (functools._HashedSeq(tuple(name.copy())), value)
-                for name, value in self.read())
+                (functools._HashedSeq(key), value)
+                for key, value in self.read())
 
         return self._cache
 
@@ -146,18 +141,21 @@ class Cache(PickleIO, CacheFunc):
 
     def save(self):
         """Save the cache to the specified file."""
-        return super().write(list(self.cache.items()))
+        return super().write([
+            (tuple(key), value)
+            for key, value in self.cache.items()])
 
     def re_init_cache(self):
         """Reinit the file and currently loaded cache."""
         super().re_init_cache()
         self._cache = {}
+        return self
 
     def __repr__(self):
         kwargs = util.filter_dict(
             lambda k, v: v is not None,
             path=self.path, cache=self._cache)
-        return make_repr(self.__class__, self.func, **kwargs)
+        return util.make_repr(self.__class__, self.func, **kwargs)
 
 
 def cache(*, path=None, load=None):

@@ -1,4 +1,3 @@
 install:
-    ./configure
-    make
-    make install
+    (sudo -h) make
+    (sudo) make install

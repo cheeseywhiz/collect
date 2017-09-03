@@ -1,4 +1,4 @@
-"""Automate downloading a picture from the Reddit json API."""
+"""Automate downloading an image from the Reddit json API."""
 import logging
 
 from . import cache
