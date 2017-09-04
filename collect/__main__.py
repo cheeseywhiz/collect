@@ -78,7 +78,8 @@ class CollectParser(argparse.ArgumentParser):
             self.collect.empty()
 
         if args.collect:
-            self.collect.test_internet = True
+            if not util.wait_for_connection():
+                raise RuntimeError('Could not connect to the internet')
             path = self.collect.reddit(args.reddit_url)
             print(path)
 

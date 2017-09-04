@@ -14,7 +14,6 @@ class Collect(os.PathLike):
 
     def __init__(self, *args, **kwargs):
         self.path = pathlib.Path(*args, **kwargs)
-        self.test_internet = False
 
         if self.path.exists() and not self.path.is_dir():
             raise NotADirectoryError(
@@ -36,9 +35,6 @@ class Collect(os.PathLike):
         if image_path.exists():
             logging.debug('Already downloaded')
             return url, image_path
-
-        if self.test_internet and not util.wait_for_connection():
-                raise RuntimeError('Could not connect to the internet')
 
         error_msg = None
         req = util.get(url)
