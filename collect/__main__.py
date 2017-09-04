@@ -1,6 +1,5 @@
 """Entry point for command line script."""
 import argparse
-import pathlib
 import sys
 
 from . import collect
@@ -18,23 +17,25 @@ class CollectParser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         super().add_argument(
-            '-c', default=config.CACHE_ROOT, metavar='PATH', dest='cache_root',
-            type=util.path_type,
-            help=f'Set the cache root path. Default {config.CACHE_ROOT}')
-        super().add_argument(
             '--clear', action='store_true',
             help='Clear the cache file and the image directory.')
         super().add_argument(
             '--collect', action='store_true',
             help='Carry out the collection with current settings.')
         super().add_argument(
-            '--show-urls', action='store_true',
-            help='List all of the successful URLs in the cache.')
-        super().add_argument(
-            '-u', default=config.REDDIT_LINK, metavar='URL', dest='url',
+            '-d', metavar='PATH', dest='directory', default=config.DIRECTORY,
+            type=util.extend_full_path,
             help=(
-                'Set the URL for the Reddit json API. Default'
-                f'{config.REDDIT_LINK}'))
+                'Set where images are downloaded to. Default '
+                f'{config.DIRECTORY}'))
+        super().add_argument(
+            '--random', action='store_true',
+            help='Print out a random image path in the collection folder.')
+        super().add_argument(
+            '-u', metavar='URL', dest='reddit_url', default=config.REDDIT_URL,
+            help=(
+                'Set the URL for the Reddit json API. Default '
+                f'{config.REDDIT_URL}'))
         super().add_argument(
             '-v', action='count',
             help='Output post information or -vv for debug information.')
@@ -43,39 +44,6 @@ class CollectParser(argparse.ArgumentParser):
         """Parse args and launch the proper programs."""
         args = super().parse_args(*args, **kwargs)
 
-        # record changes relative to default state
-        self.cache_root_changed = args.cache_root != config.CACHE_ROOT
-        self.url_changed = args.url != config.REDDIT_LINK
-
-        # set global state
-        config.set_cache_root(args.cache_root)
-        collect.download.load_cache(path=config.PICKLE_PATH)
-
-        for path in (config.CACHE_ROOT, config.IMG_DIR):
-            pathlib.Path(path).mkdir(exist_ok=True)
-
-        # act on the parse result
-        self.v_flag(args)
-        self.using(args)
-
-        for value in map(lambda f: f(args), (
-                self.show_urls_flag, self.clear_flag, self.collect,
-                self.show_help)):
-            if value:
-                break
-
-        return args
-
-    def show_help(self, args):
-        if args.v:
-            super().print_help(file=sys.stderr)
-        else:
-            super().print_usage(file=sys.stderr)
-
-        return True
-
-    def v_flag(self, args):
-        """Set root log level based on the amout of -v flags."""
         if isinstance(args.v, int):
             if args.v > 2:
                 args.v = 2
@@ -89,57 +57,59 @@ class CollectParser(argparse.ArgumentParser):
         }[args.v]
 
         logging.root.setLevel(log_level)
-        return log_level
 
-    def show_urls_flag(self, args):
-        """Output URLs in the current cache if supplied --show-urls."""
-        if args.show_urls:
-            for url, invalid, *_ in collect.download.cache.values():
-                if not invalid:
-                    print(url)
+        if False not in (args.random, args.collect):
+            self.show_help(args)
+            logging.error('Both --random and --collect present.')
+            sys.exit(1)
 
-        return args.show_urls
+        if True not in (args.random, args.clear, args.collect):
+            self.show_help(args)
+            sys.exit(1)
 
-    def clear_flag(self, args):
-        """Clear the cache file if supplied --clear."""
+        self.using(args)
+        self.collect = collect.Collect(args.directory)
+
+        if args.random:
+            path = self.collect.random()
+            print(path)
+
         if args.clear:
-            collect.download.re_init_cache()
-            for file in pathlib.Path(config.IMG_DIR).iterdir():
-                util.disown('rm', '-f', file)
+            self.collect.empty()
 
-        return args.clear
-
-    def collect(self, args):
-        """Collect the image from Reddit if supplied --collect."""
         if args.collect:
-            collect.collect(args.url)
-            return True
+            self.collect.test_internet = True
+            path = self.collect.reddit(args.reddit_url)
+            print(path)
+
+        return args
+
+    def show_help(self, args):
+        """Show usage if not verbose or full help otherwise."""
+        if args.v:
+            super().print_help(file=sys.stderr)
         else:
-            return False
+            super().print_usage(file=sys.stderr)
 
     def using(self, args):
         """Log parsed information."""
         usages = []
         parts = ['Using ']
 
-        if args.show_urls:
-            usages.append('URLs output option')
+        if args.random:
+            usages.append('random path output option')
         elif args.clear:
-            usages.append('cache clear option')
+            usages.append('directory clear option')
         elif args.collect:
             usages.append('collect image option')
 
         usages.extend(filter(None, (
-            (
-                f'cache root {args.cache_root}'
-                if self.cache_root_changed
-                else None
-            ),
-            (
-                f'URL {args.url}'
-                if self.url_changed
-                else None
-            ),
+            (f'image directory {args.directory}'
+             if args.directory != config.DIRECTORY
+             else None),
+            (f'URL {args.reddit_url}'
+             if args.reddit_url != config.REDDIT_URL
+             else None),
         )))
 
         for i, item in enumerate(usages, 1):
@@ -163,4 +133,8 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    CollectParser(description=description).parse_args(argv)
+    try:
+        CollectParser(description=description).parse_args(argv)
+    except Exception as error:
+        logging.critical('%s: %s', error.__class__.__name__, str(error))
+        raise

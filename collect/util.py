@@ -2,19 +2,17 @@
 import functools
 import inspect
 import os
-import pathlib
 import random
 import subprocess
-from urllib.parse import urlparse
+import time
 
 import requests
 
-from . import config
 from . import logging
 
 __all__ = [
-    'disown', 'filter_dict', 'get', 'make_repr', 'partial', 'path_type',
-    'ping', 'random_map', 'url_make_path']
+    'disown', 'extend_full_path', 'filter_dict', 'get', 'partial',
+    'randomized', 'random_map', 'wait_for_connection']
 
 
 # copy/paste from pywal.util with slight modification
@@ -25,6 +23,11 @@ def disown(*cmd):
         ["nohup", *cmd],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         preexec_fn=os.setpgrp)
+
+
+def extend_full_path(path):
+    """Apply both os.path.abspath and os.path.expanduser to the path."""
+    return os.path.abspath(os.path.expanduser(path))
 
 
 def filter_dict(__func, *args, **kwargs):
@@ -38,15 +41,6 @@ def filter_dict(__func, *args, **kwargs):
         key: value
         for key, value in dict(*args, **kwargs).items()
         if __func(key, value)}
-
-
-def make_repr(cls, *args, **kwargs):
-    """Format a repr from args and kwargs and a class instance."""
-    name = '.'.join((cls.__module__, cls.__name__))
-    parts = list(map(repr, args))
-    parts.extend(f'{name}={value !r}' for name, value in kwargs.items())
-
-    return f"{name}({', '.join(parts)})"
 
 
 _no_doc_module = list(functools.WRAPPER_ASSIGNMENTS)
@@ -81,35 +75,32 @@ def partial(func, *args, **kwargs):
 
 
 @partial(requests.get, headers={'User-Agent': 'u/cheeseywhiz'})
-def _get(*args, **kwargs):
+def get(*args, **kwargs):
     pass
 
 
-@functools.wraps(_get)
-def get(*args, **kwargs):
-    result = _get(*args, **kwargs)
-    logging.debug('Reason: %s', result.reason)
-    return result
+def randomized(iterable):
+    """Shuffle the order of an iterable in place."""
+    list_ = list(iterable)
+    random.shuffle(list_)
 
-
-def path_type(path):
-    """Apply both os.path.abspath and os.path.expanduser to the path."""
-    return os.path.abspath(os.path.expanduser(path))
-
-
-def ping(ip_address='8.8.8.8'):
-    """Test internet connection."""
-    return not disown('ping', '-c 1', '-w 1', ip_address).wait()
+    yield from list_
 
 
 def random_map(func, *iterables):
     """Implement map() by sending in arguments in a random order"""
-    args = list(zip(*iterables))
-    random.shuffle(args)
-    return map(func, *zip(*args))
+    return map(func, *zip(*randomized(zip(*iterables))))
 
 
-def url_make_path(url):
-    """Return pathlib.Path object for a new downloaded file in the
-    directory."""
-    return pathlib.Path(config.IMG_DIR) / urlparse(url).path.split('/')[-1]
+def wait_for_connection(max_seconds=60, seconds_wait=5, ip_address='8.8.8.8'):
+    for n_try in range(max_seconds // seconds_wait):
+        if disown('ping', '-c 1', '-w 1', ip_address).wait():
+            logging.warning('Connection not found')
+            time.sleep(seconds_wait)
+        elif n_try:
+            logging.warning('Connection found')
+            return True
+        else:
+            return True
+    else:  # no break; really no internet connection
+        return False
