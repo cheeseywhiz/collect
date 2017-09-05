@@ -69,6 +69,7 @@ class CollectParser(argparse.ArgumentParser):
 
         self.using(args)
         self.collect = collect.Collect(args.directory)
+        self.collect.path.mkdir(exist_ok=True)
 
         if args.random:
             path = self.collect.random()
