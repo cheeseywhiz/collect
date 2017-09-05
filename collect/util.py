@@ -3,26 +3,36 @@ import functools
 import inspect
 import os
 import random
+import shlex
+import shutil
 import subprocess
 import time
 
 import requests
 
 from . import logging
+from . import config
 
 __all__ = [
     'disown', 'extend_full_path', 'filter_dict', 'get', 'partial',
     'randomized', 'random_map', 'wait_for_connection']
 
 
-# copy/paste from pywal.util with slight modification
-def disown(*cmd):
+# inspired by pywal.util.disown
+def disown(cmd):
     """Call a system command in the background, disown it and hide it's
     output."""
-    return subprocess.Popen(
-        ["nohup", *cmd],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        preexec_fn=os.setpgrp)
+    cmd = shlex.split(cmd)
+
+    if shutil.which('nohup'):
+        cmd.insert(0, 'nohup')
+
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        preexec_fn=getattr(os, 'setpgrp', None))
+    proc.communicate()
+    return proc
 
 
 def extend_full_path(path):
@@ -93,8 +103,10 @@ def random_map(func, *iterables):
 
 
 def wait_for_connection(max_seconds=60, seconds_wait=5, ip_address='8.8.8.8'):
+    count_flag = '-n' if config.WINDOWS else '-c'
+
     for n_try in range(max_seconds // seconds_wait):
-        if disown('ping', '-c 1', '-w 1', ip_address).wait():
+        if disown(f'ping {count_flag} 1 -w 1 {ip_address}').wait():
             logging.warning('Connection not found')
             time.sleep(seconds_wait)
         elif n_try:
