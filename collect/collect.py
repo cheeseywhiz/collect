@@ -1,6 +1,7 @@
 """Provides functions for downloading images"""
 import os
 import pathlib
+import shutil
 from urllib.parse import urlparse
 
 from . import util
@@ -82,9 +83,8 @@ class Collect(os.PathLike):
 
     def empty(self):
         """Remove each file in this directory."""
-        for file in self.path.iterdir():
-            logging.info('Removing %s', file)
-            util.disown('rm', '-f', file)
+        shutil.rmtree(self.path)
+        self.path.mkdir()
 
     def random(self):
         return next(util.randomized(self.path.iterdir()))
