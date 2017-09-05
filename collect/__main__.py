@@ -3,7 +3,7 @@ import argparse
 import sys
 
 from . import collect
-from . import config
+from .config import DIRECTORY, REDDIT_URL
 from . import logging
 from . import util
 from . import __doc__ as description
@@ -23,19 +23,19 @@ class CollectParser(argparse.ArgumentParser):
             '--collect', action='store_true',
             help='Carry out the collection with current settings.')
         super().add_argument(
-            '-d', metavar='PATH', dest='directory', default=config.DIRECTORY,
+            '-d', metavar='PATH', dest='directory', default=DIRECTORY,
             type=util.extend_full_path,
             help=(
                 'Set where images are downloaded to. Default '
-                f'{config.DIRECTORY}'))
+                f'{DIRECTORY}'))
         super().add_argument(
             '--random', action='store_true',
             help='Print out a random image path in the collection folder.')
         super().add_argument(
-            '-u', metavar='URL', dest='reddit_url', default=config.REDDIT_URL,
+            '-u', metavar='URL', dest='reddit_url', default=REDDIT_URL,
             help=(
                 'Set the URL for the Reddit json API. Default '
-                f'{config.REDDIT_URL}'))
+                f'{REDDIT_URL}'))
         super().add_argument(
             '-v', action='count',
             help='Output post information or -vv for debug information.')
@@ -107,10 +107,10 @@ class CollectParser(argparse.ArgumentParser):
 
         usages.extend(filter(None, (
             (f'image directory {args.directory}'
-             if args.directory != config.DIRECTORY
+             if args.directory != DIRECTORY
              else None),
             (f'URL {args.reddit_url}'
-             if args.reddit_url != config.REDDIT_URL
+             if args.reddit_url != REDDIT_URL
              else None),
         )))
 
