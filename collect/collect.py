@@ -1,24 +1,23 @@
 """Provides functions for downloading images"""
-import os
-import pathlib
-import shutil
 from urllib.parse import urlparse
 
 from . import util
 from . import logging
+from . import path
 
 __all__ = ['Collect']
 
 
-class Collect(os.PathLike):
+class Collect(path.Path):
     """Perform image collection operations on a path."""
 
     def __init__(self, *args, **kwargs):
-        self.path = pathlib.Path(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        if self.path.exists() and not self.path.is_dir():
+        if super().exists() and not super().is_dir():
             raise NotADirectoryError(
-                'Attempted to instantiate Collect without a directory path.')
+                ('Attempted to instantiate Collect without a directory '
+                 f'path. Path: {self}'))
 
     def download(self, url):
         """Save a picture to the path. Returns (url, destination_path) if
@@ -31,7 +30,7 @@ class Collect(os.PathLike):
             # url path ends in literal /
             file_name = url_parts[-2]
 
-        image_path = self.path / file_name
+        image_path = self / file_name
 
         if image_path.exists():
             logging.debug('Already downloaded')
@@ -67,7 +66,7 @@ class Collect(os.PathLike):
             for post in util.get(url).json()['data']['children']}
 
         try:
-            url, path = next(filter(None, util.random_map(
+            url, image_path = next(filter(None, util.random_map(
                 self.download, urls.keys()
             )))
         except StopIteration:
@@ -77,17 +76,17 @@ class Collect(os.PathLike):
         logging.info('Post: %s', post['permalink'])
         logging.info('Title: %s', post['title'])
         logging.info('Image: %s', url)
-        logging.info('File: %s', path)
+        logging.info('File: %s', image_path)
 
-        return path
+        return image_path
 
     def empty(self):
         """Remove each file in this directory."""
-        shutil.rmtree(self.path)
-        self.path.mkdir()
+        super().rmtree()
+        super().mkdir()
 
     def random(self):
-        return next(util.randomized(self.path.iterdir()))
-
-    def __fspath__(self):
-        return os.fspath(self.path)
+        try:
+            return next(util.randomized(list(self)))
+        except StopIteration:
+            return ''

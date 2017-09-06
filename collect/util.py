@@ -89,17 +89,14 @@ def get(*args, **kwargs):
     pass
 
 
-def randomized(iterable):
-    """Shuffle the order of an iterable in place."""
-    list_ = list(iterable)
-    random.shuffle(list_)
-
-    yield from list_
+def randomized(list_):
+    """Shuffle the order of a sequence in place."""
+    yield from random.choices(list_, k=len(list_))
 
 
 def random_map(func, *iterables):
     """Implement map() by sending in arguments in a random order"""
-    return map(func, *zip(*randomized(zip(*iterables))))
+    return map(func, *zip(*randomized(list(zip(*iterables)))))
 
 
 def wait_for_connection(max_seconds=60, seconds_wait=5, ip_address='8.8.8.8'):
