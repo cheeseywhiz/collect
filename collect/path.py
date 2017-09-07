@@ -30,16 +30,13 @@ class PathBase(os.PathLike):
         if path is None:
             path = os.getcwd()
 
-        path = os.sep.join(path.split('/'))
         parts = os.path.abspath(os.path.expanduser(path)).split(os.sep)
-
-        if config.WINDOWS:
-            parts_fmt = [...]
-        else:
-            parts_fmt = parts[1:]
-
         self.__path = os.sep.join(parts)
-        self._parts = tuple(parts_fmt)
+
+        if not config.WINDOWS:
+            parts[0] = os.sep
+
+        self._parts = tuple(parts)
 
     @property
     def parts(self):
@@ -82,7 +79,7 @@ class Path(PathBase):
 
     def __truediv__(self, other):
         """Perform self / other to join paths."""
-        return self.join(self, other)
+        return self.join(other)
 
     def open(
             self, mode='r', buffering=-1, encoding=None, errors=None,
@@ -130,4 +127,4 @@ class Path(PathBase):
     @from_iterable
     def __iter__(self):
         """Iterate over the paths within this path."""
-        yield from os.listdip(self)
+        yield from map(self.join, os.listdir(self))
