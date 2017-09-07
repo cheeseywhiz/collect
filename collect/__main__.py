@@ -23,8 +23,8 @@ class CollectParser(argparse.ArgumentParser):
             '--collect', action='store_true',
             help='Carry out the collection with current settings.')
         super().add_argument(
-            '-d', metavar='PATH', dest='directory', default=DIRECTORY,
-            type=util.extend_full_path,
+            '-d', metavar='PATH', dest='collector', default=DIRECTORY,
+            type=collect.Collect,
             help=(
                 'Set where images are downloaded to. Default '
                 f'{DIRECTORY}'))
@@ -68,20 +68,20 @@ class CollectParser(argparse.ArgumentParser):
             sys.exit(1)
 
         self.using(args)
-        self.collect = collect.Collect(args.directory)
-        self.collect.mkdir(exist_ok=True)
+        args.collector.mkdir(exist_ok=True)
 
         if args.random:
-            path = self.collect.random()
-            print(path)
+            path = args.collector.random()
+            if path is not None:
+                print(path)
 
         if args.clear:
-            self.collect.empty()
+            args.collector.empty()
 
         if args.collect:
             if not util.wait_for_connection():
                 raise RuntimeError('Could not connect to the internet')
-            path = self.collect.reddit(args.reddit_url)
+            path = args.collector.reddit(args.reddit_url)
             print(path)
 
         self.args = args
@@ -107,11 +107,11 @@ class CollectParser(argparse.ArgumentParser):
             usages.append('collect image option')
 
         usages.extend(filter(None, (
-            (f'image directory {args.directory}'
-             if args.directory != DIRECTORY
+            (f'image directory {args.collector}'
+             if str(args.collector) != DIRECTORY
              else None),
             (f'URL {args.reddit_url}'
-             if args.reddit_url != REDDIT_URL
+             if str(args.reddit_url) != REDDIT_URL
              else None),
         )))
 
