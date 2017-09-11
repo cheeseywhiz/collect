@@ -10,12 +10,12 @@ __all__ = ['Collect']
 
 class Collect(path.Path):
     """Perform image collection operations on a path."""
-    def __new__(cls, *args, **kwargs):
-        self = super(path.Path, cls).__new__(cls, *args, **kwargs)
-        super(path.Path, self).__init__(*args, **kwargs)
+    def __new__(cls, path=None):
+        self = super(path.Path, cls).__new__(cls, path=None)
+        super(path.Path, self).__init__(path=None)
         return self
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, path=None):
         if super().exists() and not super().is_dir():
             raise NotADirectoryError(
                 ('Attempted to instantiate Collect without a directory '
@@ -60,7 +60,6 @@ class Collect(path.Path):
 
         return url, image_path
 
-    @path.Path.MakeStr
     def reddit(self, url):
         """Download a random image from a Reddit json url. Returns the
         destination path or raises RuntimeError if not successful."""

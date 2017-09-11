@@ -4,61 +4,72 @@ import shutil
 
 from . import config
 
-__all__ = ['PathBase', 'Path']
+__all__ = ['PathBase', 'PathMeta', 'Path']
 
 
-def from_iterable(method):
-    @functools.wraps(method)
-    def wrapper(*args, **kwargs):
-        yield from map(Path, method(*args, **kwargs))
-
-    return wrapper
-
-
-class PathMeta(type, os.PathLike):
+class _ApplyDecorators(type):
+    """Metaclass that applies decorators to methods as specified by _Decorate
+    instances."""
     def __new__(cls, name, bases, namespace):
-        def from_str(func):
-            @functools.wraps(func)
-            def wrapper(*args, **kwargs):
-                return self.__new__(self, func(*args, **kwargs))
-
-            return wrapper
-
-        def from_iter(func):
-            @functools.wraps(func)
-            def wrapper(*args, **kwargs):
-                yield from map(
-                    lambda path: self.__new__(self, path),
-                    func(*args, **kwargs))
-
-            return wrapper
-
-        namespace.update({
-            name: from_str(value.func)
-            for name, value in namespace.items()
-            if type(value) is PathMeta.MakeStr
-        })
-        namespace.update({
-            name: from_iter(value.func)
-            for name, value in namespace.items()
-            if type(value) is PathMeta.MakeIter
-        })
         self = type.__new__(cls, name, bases, namespace)
+
+        for name, value in namespace.items():
+            if isinstance(type(value), _Decorate):
+                setattr(self, name, value.decorator(self, value.method))
+
         return self
 
-    def __init__(self, name, bases, namespace):
-        pass
 
-    class MakeStr:
-        def __init__(self, func):
-            self.func = func
+class _Decorate(type):
+    """Indicate to the _ApplyDecorators metaclass to apply the given decorator
+    by calling the decorator with the new class as the first agument."""
+    def __new__(cls, decorator):
+        name = f'Decorate_{decorator.__name__}_At_Class_Creation'
+        bases = (_Decorate.Base, )
+        namespace = {
+            'decorator': staticmethod(decorator),
+            '__doc__': _Decorate.Base.__doc__ % decorator,
+        }
+        return type.__new__(cls, name, bases, namespace)
 
-    class MakeIter:
-        def __init__(self, func):
-            self.func = func
+    def __repr__(self):
+        cls = self.__class__
+        module = cls.__module__
+        name = cls.__name__
+        return f'{module}.{name}({self.decorator !r})'
+
+    class Base:
+        """Apply %r on new class instances."""
+
+        def __init__(self, method):
+            self.method = method
+
+
+class PathMeta(_ApplyDecorators):
+    """Provides the numerous class methods for all Path types."""
+
+    def home(self):
+        """Return the user's home directory."""
+        return self(path=os.path.expanduser('~'))
+
+    def cwd(self):
+        """Return the current working directory."""
+        return self(path=os.getcwd())
+
+    def from_str(self, func):
+        """Wrap a function such that the result is passed to a new instance of
+        this class."""
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            return self.__new__(self, func(*args, **kwargs))
+
+        return wrapper
+
+    MakeStr = _Decorate(from_str)
 
 
 class PathBase(metaclass=PathMeta):
+    """Provides general functionality for all Path types."""
     def __new__(cls, path=None):
         self = object.__new__(cls)
         if path is None:
@@ -67,9 +78,8 @@ class PathBase(metaclass=PathMeta):
         parts = os.path.normpath(os.path.expanduser(path)).split(os.sep)
         self.__path = os.sep.join(parts)
 
-        if not config.WINDOWS:
-            if not parts[0]:
-                parts[0] = os.sep
+        if not config.WINDOWS and not parts[0]:
+            parts[0] = os.sep
 
         self.__parts = tuple(parts)
         return self
@@ -82,18 +92,9 @@ class PathBase(metaclass=PathMeta):
         """Split the path by the OS path slash separator."""
         return self.__parts
 
-    @classmethod
-    def home(cls):
-        """Return the user's home directory."""
-        return cls(path=os.path.expanduser('~'))
-
-    @classmethod
-    def cwd(cls):
-        """Return the current working directory."""
-        return cls(path=os.getcwd())
-
     def __fspath__(self):
-        return str(self)
+        """Return the file system representation of the path."""
+        return self.__path
 
     def __eq__(self, other):
         try:
@@ -102,7 +103,7 @@ class PathBase(metaclass=PathMeta):
             return NotImplemented
 
     def __str__(self):
-        return self.__path
+        return os.fspath(self)
 
     def __repr__(self):
         cls = self.__class__
@@ -112,10 +113,11 @@ class PathBase(metaclass=PathMeta):
 
 
 class Path(PathBase):
-    """High level and cross platform operations on paths."""
+    """Provides high level and cross platform file system manipulations on
+    paths."""
     @PathBase.MakeStr
     def join(self, *others):
-        """Connect more file names onto this path."""
+        """Connect one or more file names onto this path."""
         return os.path.join(self, *others)
 
     @PathBase.MakeStr
@@ -190,7 +192,6 @@ class Path(PathBase):
 
         yield from recur(self)
 
-    @PathBase.MakeIter
     def __iter__(self):
         """Iterate over the paths within this path."""
         yield from map(self.join, os.listdir(self))
