@@ -3,16 +3,16 @@ from urllib.parse import urlparse
 
 from . import util
 from . import logging
-from . import path
+from . import path as _path
 
 __all__ = ['Collect']
 
 
-class Collect(path.Path):
+class Collect(_path.Path):
     """Perform image collection operations on a path."""
     def __new__(cls, path=None):
-        self = super(path.Path, cls).__new__(cls, path=None)
-        super(path.Path, self).__init__(path=None)
+        self = super(_path.Path, cls).__new__(cls, path=path)
+        super(_path.Path, self).__init__(path=path)
         return self
 
     def __init__(self, path=None):

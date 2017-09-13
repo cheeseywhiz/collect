@@ -14,8 +14,8 @@ from . import logging
 from . import config
 
 __all__ = [
-    'disown', 'extend_full_path', 'filter_dict', 'get', 'partial',
-    'randomized', 'random_map', 'wait_for_connection']
+    'disown', 'get', 'partial', 'randomized', 'random_map',
+    'wait_for_connection']
 
 
 # inspired by pywal.util.disown
@@ -34,24 +34,6 @@ def disown(cmd):
     proc.communicate()
 
     return proc
-
-
-def extend_full_path(path):
-    """Apply both os.path.abspath and os.path.expanduser to the path."""
-    return os.path.abspath(os.path.expanduser(path))
-
-
-def filter_dict(__func, *args, **kwargs):
-    """Filter adaptation for dicts. __func is the filter function a la filter()
-    and args and kwargs are passed to dict(). if __func is None than it filters
-    based on the bool value of the value of each item."""
-    if __func is None:
-        __func = (lambda key, value: bool(value))
-
-    return {
-        key: value
-        for key, value in dict(*args, **kwargs).items()
-        if __func(key, value)}
 
 
 _no_doc_module = list(functools.WRAPPER_ASSIGNMENTS)
