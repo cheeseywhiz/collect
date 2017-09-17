@@ -1,11 +1,13 @@
+ifdef VIRTUALENV
+	USER_FLAG=--user
+else
+	USER_FLAG=""
+endif
+
 all: testimport
 
 install:
-	ifdef VIRTUALENV
-		@python setup.py install
-	else
-		@python setup.py install --user
-	endif
+	python setup.py install $(USER_FLAG)
 
 uninstall:
 	@pip uninstall .
