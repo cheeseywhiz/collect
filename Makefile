@@ -1,7 +1,7 @@
 ifdef VIRTUALENV
 	USER_FLAG=--user
 else
-	USER_FLAG=""
+	USER_FLAG=
 endif
 
 all: testimport
