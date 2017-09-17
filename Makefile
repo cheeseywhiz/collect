@@ -1,4 +1,4 @@
-ifdef VIRTUALENV
+ifdef VIRTUAL_ENV
 	USER_FLAG=--user
 else
 	USER_FLAG=
