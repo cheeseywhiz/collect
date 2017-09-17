@@ -7,7 +7,7 @@ endif
 all: testimport
 
 install:
-	python setup.py install $(USER_FLAG)
+	@python setup.py install $(USER_FLAG)
 
 uninstall:
 	@pip uninstall .
