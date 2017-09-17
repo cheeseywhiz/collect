@@ -4,16 +4,16 @@ else
 	USER_FLAG=--user
 endif
 
-all: testimport
+all: testimport clean
 
 install:
-	@python setup.py install $(USER_FLAG)
+	@python setup.py install --record files.txt $(USER_FLAG)
 
 uninstall:
-	@pip uninstall .
+	@cat files.txt | xargs rm -rf
 
 testimport:
-	@python -c import\ collect
+	@python -c "import collect"
 
 clean:
 	@rm -rf build *.egg-info dist **/__pycache__
