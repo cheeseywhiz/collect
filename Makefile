@@ -1,16 +1,17 @@
-all: pip testimport clean
+all: testimport
 
 install:
-	@python setup.py install --record files.txt
+	ifdef VIRTUALENV
+		@python setup.py install
+	else
+		@python setup.py install --user
+	endif
 
 uninstall:
-	@cat files.txt | xargs rm -rf
-
-pip:
-	@pip install -r requirements.txt
+	@pip uninstall .
 
 testimport:
-	@python -c 'import collect; from collect import __main__, config'
+	@python -c import\ collect
 
 clean:
 	@rm -rf build *.egg-info dist **/__pycache__
