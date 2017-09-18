@@ -25,13 +25,13 @@ class CollectParser(argparse.ArgumentParser):
         super().add_argument(
             'collector', metavar='PATH', default=DIRECTORY, nargs='?',
             type=collect.Collect,
-            help='Set where images are downloaded to. Default {DIRECTORY}')
+            help=f'Set where images are downloaded to. Default {DIRECTORY}')
         super().add_argument(
             '--random', action='store_true',
             help='Print out a random image path in the collection folder.')
         super().add_argument(
             '-u', metavar='URL', dest='reddit_url', default=REDDIT_URL,
-            help='Set the URL for the Reddit json API. Default {REDDIT_URL}')
+            help=f'Set the URL for the Reddit json API. Default {REDDIT_URL}')
         super().add_argument(
             '-v', action='count',
             help='Output post information or -vv for debug information.')

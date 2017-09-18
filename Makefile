@@ -4,12 +4,14 @@ ifdef VIRTUAL_ENV
 else
 	USER_FLAG=--user
 	LINK_EXE=ln -s $(HOME)/.local/bin/collect /usr/bin/collect
+	RM_EXISTING_EXE=rm /usr/bin/collect
 endif
 
 all: testimport clean
 
 install:
-	@python setup.py install --record files.txt $(USER_FLAG)
+	@python setup.py install --record files.txt --force $(USER_FLAG)
+	@$(RM_EXISTING_EXE)
 	@$(LINK_EXE)
 
 uninstall:
