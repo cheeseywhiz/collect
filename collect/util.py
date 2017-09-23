@@ -1,10 +1,8 @@
 """Provides general utility functions"""
 import functools
 import inspect
-import os
 import random
 import shlex
-import shutil
 import subprocess
 import time
 
@@ -19,21 +17,13 @@ __all__ = [
 
 
 # inspired by pywal.util.disown
-def disown(cmd):
-    """Call a system command in the background, disown it and hide it's
-    output."""
-    cmd = shlex.split(cmd)
+def disown(cmd: str):
+    """Hide a command's output."""
+    process = subprocess.Popen(
+        shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process.communicate()
 
-    if shutil.which('nohup'):
-        cmd.insert(0, 'nohup')
-
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        preexec_fn=getattr(os, 'setpgrp', None))
-    proc.communicate()
-
-    return proc
+    return process
 
 
 _no_doc_module = list(functools.WRAPPER_ASSIGNMENTS)

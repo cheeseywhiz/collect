@@ -59,7 +59,7 @@ class CollectParser(argparse.ArgumentParser):
             logging.error('Both --random and --collect present.')
             sys.exit(1)
 
-        if True not in (args.random, args.clear, args.collect):
+        if not any((args.random, args.clear, args.collect)):
             self.show_help(args)
             sys.exit(1)
 
