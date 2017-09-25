@@ -92,6 +92,21 @@ class PathBase(metaclass=PathMeta):
         """Split the path by the OS path slash separator."""
         return self.__parts
 
+    @property
+    def basename(self):
+        """The final element in the path."""
+        return self.__parts[-1]
+
+    @property
+    def split(self):
+        """Split the path's basename by filename and extension."""
+        res = self.basename.split('.', maxsplit=1)
+
+        if len(res) == 1:
+            res.append('')
+
+        return tuple(res)
+
     def __fspath__(self):
         """Return the file system representation of the path."""
         return self.__path

@@ -1,5 +1,6 @@
 """Entry point for command line script."""
 import argparse
+import shlex
 import sys
 
 from . import collect
@@ -36,9 +37,15 @@ class CollectParser(argparse.ArgumentParser):
             '-v', action='count',
             help='Output post information or -vv for debug information.')
 
-    def parse_args(self, *args, **kwargs):
-        """Parse args and launch the proper programs."""
-        args = super().parse_args(*args, **kwargs)
+    def parse_args(self, argv=None, *args, **kwargs):
+        """Parse args and launch the proper programs. Default for argv is to
+        use sys.argv. argv accepts str or list of arguments."""
+        if argv is None:
+            argv = sys.argv[1:]
+        elif isinstance(argv, str):
+            argv = shlex.split(argv)
+
+        args = super().parse_args(argv, *args, **kwargs)
 
         if isinstance(args.v, int):
             if args.v > 2:
@@ -127,11 +134,6 @@ class CollectParser(argparse.ArgumentParser):
 
 
 def main(argv=None):
-    """Launch the main functions with the given argv or imported sys.argv by
-    default."""
-    if argv is None:
-        argv = sys.argv[1:]
-
     try:
         CollectParser(description=description).parse_args(argv)
     except Exception as error:
