@@ -75,8 +75,8 @@ class PathBase(metaclass=PathMeta):
         if path is None:
             path = '.'
 
-        parts = os.path.normpath(os.path.expanduser(path)).split(os.sep)
-        self.__path = os.sep.join(parts)
+        self.__path = os.path.normpath(os.path.expanduser(path))
+        parts = self.__path.split(os.sep)
 
         if not config.WINDOWS and not parts[0]:
             parts[0] = os.sep
