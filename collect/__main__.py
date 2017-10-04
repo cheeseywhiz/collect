@@ -139,3 +139,7 @@ def main(argv=None):
     except Exception as error:
         logging.critical('%s: %s', error.__class__.__name__, str(error))
         raise
+
+
+if __name__ == '__main__':
+    main()

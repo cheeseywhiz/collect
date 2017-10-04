@@ -1,6 +1,7 @@
 import functools
 import os
 import shutil
+import subprocess
 
 from . import config
 
@@ -107,13 +108,29 @@ class PathBase(metaclass=PathMeta):
 
         return tuple(res)
 
+    def _first_diff_part(self, other):
+        """Return the first index where a path difference occurs, or -1 if no
+        difference occurs."""
+        if self == other:
+            return len(self.parts) - 1
+        elif len(other.parts) < len(self.parts):
+            return len(other.parts) - 1
+
+        for i, (self_part, other_part) in enumerate(
+            zip(self.parts, other.parts)
+        ):
+            if self_part != other_part:
+                return i
+        else:
+            return -1
+
     def __fspath__(self):
         """Return the file system representation of the path."""
         return self.__path
 
     def __eq__(self, other):
         try:
-            return os.path.samefile(self, other)
+            return os.fspath(self) == os.fspath(other)
         except TypeError:
             return NotImplemented
 
@@ -125,6 +142,9 @@ class PathBase(metaclass=PathMeta):
         module = cls.__module__
         name = cls.__name__
         return f'{module}.{name}({self.__path !r})'
+
+    def __hash__(self):
+        return hash(os.fspath(self))
 
 
 class Path(PathBase):
@@ -139,6 +159,15 @@ class Path(PathBase):
     def realpath(self):
         """Return the absolute path and eliminate symbolic links."""
         return os.path.realpath(self)
+
+    @PathBase.MakeStr
+    def relpath(self, start=None):
+        """Return the abbreviated form of self relative to start. Default for
+        start is the current working directory."""
+        if start is None:
+            start = self.__class__.cwd()
+
+        return os.path.relpath(self, start)
 
     @PathBase.MakeStr
     def abspath(self):
@@ -173,6 +202,18 @@ class Path(PathBase):
         """Check if the path is a symbolic link."""
         return os.path.islink(self)
 
+    def __contains__(self, other):
+        """return other in self
+        Check if the given path is inside the directory at self. (Without
+        filesystem check.)"""
+        return self.abspath()._first_diff_part(other.abspath()) < 0
+
+    def is_in_dir(self, other):
+        """return self in other
+        Check if self is inside the directory at the given path. (Without
+        filesystem check.)"""
+        return self in Path(other)
+
     def rmtree(self, ignore_errors=False, onerror=None):
         """Delete every file inside a directory file."""
         shutil.rmtree(self, ignore_errors=ignore_errors, onerror=onerror)
@@ -189,6 +230,13 @@ class Path(PathBase):
     def parent(self):
         """Move up one directory."""
         return self / '..'
+
+    @property
+    def type(self):
+        """Return the MIME type of this file."""
+        return subprocess.Popen(
+            ['file', '--mime-type', self], stdout=subprocess.PIPE
+        ).communicate()[0].decode().split(': ')[1][:-1]
 
     @property
     def tree(self):
