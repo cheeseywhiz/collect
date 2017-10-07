@@ -79,11 +79,17 @@ class PathBase(metaclass=PathMeta):
         self.__path = os.path.normpath(os.path.expanduser(path))
         parts = self.__path.split(os.sep)
 
-        if not config.WINDOWS and not parts[0]:
-            parts[0] = os.sep
+        if os.path.isabs(self.__path):
+            if config.WINDOWS:
+                if not parts[0]:
+                    parts[0] = os.getenv('HOMEDRIVE')
 
-            if len(parts) == 2 and not parts[1]:
-                parts = ['/']
+                parts.insert(0, os.sep)
+            else:
+                parts[0] = os.sep
+
+        if not parts[-1]:
+            parts.pop()
 
         self.__parts = tuple(parts)
         return self
