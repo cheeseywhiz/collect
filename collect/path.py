@@ -82,6 +82,9 @@ class PathBase(metaclass=PathMeta):
         if not config.WINDOWS and not parts[0]:
             parts[0] = os.sep
 
+            if len(parts) == 2 and not parts[1]:
+                parts = ['/']
+
         self.__parts = tuple(parts)
         return self
 
@@ -141,10 +144,10 @@ class PathBase(metaclass=PathMeta):
         cls = self.__class__
         module = cls.__module__
         name = cls.__name__
-        return f'{module}.{name}({self.__path !r})'
+        return f'{module}.{name}({str(self) !r})'
 
     def __hash__(self):
-        return hash(os.fspath(self))
+        return hash(str(self))
 
 
 class Path(PathBase):
@@ -203,15 +206,24 @@ class Path(PathBase):
         return os.path.islink(self)
 
     def __contains__(self, other):
-        """return other in self
-        Check if the given path is inside the directory at self. (Without
+        """Check recursively if other is inside self (a directory). (Without
         filesystem check.)"""
         return self.abspath()._first_diff_part(other.abspath()) < 0
 
+    def contains_toplevel(self, other):
+        """Check if other is at the top level of self (a directory)."""
+        self = self.abspath()
+        other = other.abspath()
+        return other in self and len(other.parts) - len(self.parts) == 1
+
+    def is_toplevel(self, other):
+        """Check if self is in the top level of other (a directory)."""
+        return Path(other).contains_toplevel(self)
+
     def is_in_dir(self, other):
         """return self in other
-        Check if self is inside the directory at the given path. (Without
-        filesystem check.)"""
+        Check if self is inside other (a directory). (Without filesystem
+        check.)"""
         return self in Path(other)
 
     def rmtree(self, ignore_errors=False, onerror=None):
