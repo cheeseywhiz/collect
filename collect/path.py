@@ -211,10 +211,16 @@ class Path(PathBase):
         """Check if the path is a symbolic link."""
         return os.path.islink(self)
 
+    def is_abs(self):
+        """Check if the path is absolute."""
+        return os.path.isabs(self)
+
     def __contains__(self, other):
         """Check recursively if other is inside self (a directory). (Without
         filesystem check.)"""
-        return self.abspath()._first_diff_part(other.abspath()) < 0
+        self = self.abspath()
+        other = Path(other).abspath()
+        return self._first_diff_part(other) < 0
 
     def contains_toplevel(self, other):
         """Check if other is at the top level of self (a directory)."""
@@ -259,19 +265,16 @@ class Path(PathBase):
     @property
     def tree(self):
         """Generate all of the paths in this directory path."""
-        def recur(path):
-            yield path
+        yield self
 
-            for subpath in path:
-                if subpath.is_dir() and not subpath.is_link():
-                    try:
-                        yield from recur(subpath)
-                    except PermissionError:
-                        pass
-                else:
-                    yield subpath
-
-        yield from recur(self)
+        for item in self:
+            if item.is_dir() and not item.is_link():
+                try:
+                    yield from item.tree
+                except PermissionError:
+                    pass
+            else:
+                yield item
 
     def __iter__(self):
         """Iterate over the paths within this path."""

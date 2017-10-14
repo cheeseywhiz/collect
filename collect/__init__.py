@@ -1,11 +1,9 @@
 """Automate downloading an image from the Reddit json API."""
-import logging
-
 from . import collect
+from .logger import Logger
 from . import path
 from . import util
 
-__all__ = ['collect', 'logging', 'path', 'util']
+__all__ = ['collect', 'Logger', 'path', 'util']
 
-logging.basicConfig(format='%(name)s: %(levelname)s: %(message)s')
-logging.root.name = __name__
+Logger.name = __name__

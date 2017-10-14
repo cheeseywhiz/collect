@@ -8,7 +8,7 @@ import time
 
 import requests
 
-from . import logging
+from .logger import Logger
 from . import config
 
 __all__ = [
@@ -77,10 +77,10 @@ def wait_for_connection(max_seconds=60, seconds_wait=5, ip_address='8.8.8.8'):
 
     for n_try in range(max_seconds // seconds_wait):
         if disown(f'ping {count_flag} 1 -w 1 {ip_address}').wait():
-            logging.warning('Connection not found')
+            Logger.warning('Connection not found')
             time.sleep(seconds_wait)
         elif n_try:
-            logging.warning('Connection found')
+            Logger.warning('Connection found')
             return True
         else:
             return True

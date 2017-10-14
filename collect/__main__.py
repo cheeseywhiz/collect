@@ -5,7 +5,7 @@ import sys
 
 from . import collect
 from .config import DIRECTORY, REDDIT_URL
-from . import logging
+from .logger import Logger
 from . import util
 from . import __doc__ as description
 
@@ -27,6 +27,9 @@ class CollectParser(argparse.ArgumentParser):
             'collector', metavar='PATH', default=DIRECTORY, nargs='?',
             type=collect.Collect,
             help=f'Set where images are downloaded to. Default {DIRECTORY}')
+        super().add_argument(
+            '--no-repeat', action='store_true',
+            help='Collect a new image each time.')
         super().add_argument(
             '--random', action='store_true',
             help='Print out a random image path in the collection folder.')
@@ -59,11 +62,11 @@ class CollectParser(argparse.ArgumentParser):
             2: 'DEBUG',
         }[args.v]
 
-        logging.root.setLevel(log_level)
+        Logger.setLevel(log_level)
 
         if False not in (args.random, args.collect):
             self.show_help(args)
-            logging.error('Both --random and --collect present.')
+            Logger.error('Both --random and --collect present.')
             sys.exit(1)
 
         if not any((args.random, args.clear, args.collect)):
@@ -84,7 +87,7 @@ class CollectParser(argparse.ArgumentParser):
         if args.collect:
             if not util.wait_for_connection():
                 raise RuntimeError('Could not connect to the internet')
-            path = args.collector.reddit(args.reddit_url)
+            path = args.collector.reddit(args.reddit_url, args.no_repeat)
             print(path)
 
         self.args = args
@@ -130,14 +133,14 @@ class CollectParser(argparse.ArgumentParser):
                 parts.append('and ')
 
         if usages:
-            logging.debug(''.join(parts))
+            Logger.debug(''.join(parts))
 
 
 def main(argv=None):
     try:
         CollectParser(description=description).parse_args(argv)
     except Exception as error:
-        logging.critical('%s: %s', error.__class__.__name__, str(error))
+        Logger.critical('%s: %s', error.__class__.__name__, error)
         raise
 
 

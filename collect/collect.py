@@ -1,8 +1,10 @@
 """Provides functions for downloading images"""
+import functools
 from urllib.parse import urlparse
+import sys
 
 from . import util
-from . import logging
+from .logger import Logger
 from . import path as _path
 
 __all__ = ['Collect']
@@ -21,7 +23,7 @@ class Collect(_path.Path):
                 ('Attempted to instantiate Collect without a directory '
                  f'path. Path: {self}'))
 
-    def download(self, url):
+    def download(self, url, no_repeat=False):
         """Save a picture to the path. Returns (url, destination_path) if
         successful or None otherwise."""
         url_parts = urlparse(url).path.split('/')
@@ -35,50 +37,52 @@ class Collect(_path.Path):
         image_path = self / file_name
 
         if image_path.exists():
-            logging.debug('Already downloaded')
-            return url, image_path
+            Logger.debug('Already downloaded: %s', url)
+            return None if no_repeat else (url, image_path)
 
         error_msg = None
-        req = util.get(url)
-        content_type = req.headers['content-type']
+        res = util.get(url)
+        content_type = res.headers['content-type']
 
-        if 'removed' in req.url:
+        if 'removed' in res.url:
             error_msg = 'Appears to be removed'
-        if not content_type.startswith('image'):
+        if 'image' not in content_type:
             error_msg = 'Not an image'
-        if content_type.endswith('gif'):
+        if 'gif' in content_type:
             error_msg = 'Is a .gif'
 
         if error_msg is not None:
-            logging.debug('%s: %s', error_msg, url)
+            Logger.debug('%s: %s', error_msg, url)
             return None
 
-        logging.debug('Collected new image.')
+        Logger.debug('Collected new image: %s', url)
 
         with image_path.open('wb') as file:
-            file.write(req.content)
+            file.write(res.content)
 
         return url, image_path
 
-    def reddit(self, url):
+    def reddit(self, url, no_repeat=False):
         """Download a random image from a Reddit json url. Returns the
         destination path or raises RuntimeError if not successful."""
+        download = functools.partial(self.download, no_repeat=no_repeat)
         urls = {
             post['data']['url']: post['data']
             for post in util.get(url).json()['data']['children']}
 
         try:
             url, image_path = next(filter(None, util.random_map(
-                self.download, urls.keys()
+                download, urls.keys()
             )))
         except StopIteration:
-            raise RuntimeError('Could not find image')
+            Logger.error('Could not find new image')
+            sys.exit(1)
 
         post = urls[url]
-        logging.info('Post: %s', post['permalink'])
-        logging.info('Title: %s', post['title'])
-        logging.info('Image: %s', url)
-        logging.info('File: %s', image_path)
+        Logger.info('Post: %s', post['permalink'])
+        Logger.info('Title: %s', post['title'])
+        Logger.info('Image: %s', url)
+        Logger.info('File: %s', image_path)
 
         return image_path
 
