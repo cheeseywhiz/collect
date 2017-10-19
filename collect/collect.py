@@ -3,11 +3,14 @@ import functools
 from urllib.parse import urlparse
 import sys
 
+import requests
+
 from . import util
 from .logger import Logger
 from . import path as _path
 
 __all__ = ['Collect']
+_get = functools.partial(requests.get, headers={'User-Agent': 'collect/1.0'})
 
 
 class Collect(_path.Path):
@@ -41,7 +44,7 @@ class Collect(_path.Path):
             return None if no_repeat else (url, image_path)
 
         error_msg = None
-        res = util.get(url)
+        res = _get(url)
         content_type = res.headers['content-type']
 
         if 'removed' in res.url:
@@ -68,7 +71,7 @@ class Collect(_path.Path):
         download = functools.partial(self.download, no_repeat=no_repeat)
         urls = {
             post['data']['url']: post['data']
-            for post in util.get(url).json()['data']['children']}
+            for post in _get(url).json()['data']['children']}
 
         try:
             url, image_path = next(filter(None, util.random_map(

@@ -216,8 +216,7 @@ class Path(PathBase):
         return os.path.isabs(self)
 
     def __contains__(self, other):
-        """Check recursively if other is inside self (a directory). (Without
-        filesystem check.)"""
+        """Check recursively if other is inside self (a directory)."""
         self = self.abspath()
         other = Path(other).abspath()
         return self._first_diff_part(other) < 0
@@ -234,8 +233,7 @@ class Path(PathBase):
 
     def is_in_dir(self, other):
         """return self in other
-        Check if self is inside other (a directory). (Without filesystem
-        check.)"""
+        Check if self is inside other (a directory)."""
         return self in Path(other)
 
     def rmtree(self, ignore_errors=False, onerror=None):

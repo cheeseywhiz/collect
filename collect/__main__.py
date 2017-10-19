@@ -111,6 +111,8 @@ class CollectParser(argparse.ArgumentParser):
             usages.append('directory clear option')
         elif args.collect:
             usages.append('collect image option')
+            if args.no_repeat:
+                usages.append('no repeat option')
 
         usages.extend(filter(None, (
             (f'image directory {args.collector}'
