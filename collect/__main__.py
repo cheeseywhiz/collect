@@ -66,8 +66,7 @@ class CollectParser(argparse.ArgumentParser):
 
         if False not in (args.random, args.collect):
             self.show_help(args)
-            Logger.error('Both --random and --collect present.')
-            sys.exit(1)
+            Logger.exit('Both --random and --collect present.')
 
         if not any((args.random, args.clear, args.collect)):
             self.show_help(args)
@@ -78,6 +77,7 @@ class CollectParser(argparse.ArgumentParser):
 
         if args.random:
             path = args.collector.random()
+
             if path is not None:
                 print(path)
 
@@ -86,9 +86,14 @@ class CollectParser(argparse.ArgumentParser):
 
         if args.collect:
             if not util.wait_for_connection():
-                raise RuntimeError('Could not connect to the internet')
+                Logger.exit('Could not connect to the internet')
+
             path = args.collector.reddit(args.reddit_url, args.no_repeat)
-            print(path)
+
+            if path is None:
+                Logger.exit('Could not find new image')
+            else:
+                print(path)
 
         self.args = args
         return args

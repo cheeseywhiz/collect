@@ -1,7 +1,6 @@
 """Provides functions for downloading images"""
 import functools
 from urllib.parse import urlparse
-import sys
 
 import requests
 
@@ -27,21 +26,19 @@ class Collect(_path.Path):
                  f'path. Path: {self}'))
 
     def download(self, url, no_repeat=False):
-        """Save a picture to the path. Returns (url, destination_path) if
+        """Save a picture to the path. Returns Path object of new image if
         successful or None otherwise."""
         url_parts = urlparse(url).path.split('/')
 
-        if url_parts[-1]:
-            file_name = url_parts[-1]
-        else:
+        if not url_parts[-1]:
             # url path ends in literal /
-            file_name = url_parts[-2]
+            url_parts.pop()
 
-        image_path = self / file_name
+        image_path = self / url_parts[-1]
 
         if image_path.exists():
             Logger.debug('Already downloaded: %s', url)
-            return None if no_repeat else (url, image_path)
+            return None if no_repeat else image_path
 
         error_msg = None
         res = _get(url)
@@ -63,27 +60,25 @@ class Collect(_path.Path):
         with image_path.open('wb') as file:
             file.write(res.content)
 
-        return url, image_path
+        return image_path
 
     def reddit(self, url, no_repeat=False):
-        """Download a random image from a Reddit json url. Returns the
-        destination path or raises RuntimeError if not successful."""
-        download = functools.partial(self.download, no_repeat=no_repeat)
-        urls = {
-            post['data']['url']: post['data']
-            for post in _get(url).json()['data']['children']}
+        """Download a random image from a Reddit json url. Returns Path object
+        of new image if successful or None otherwise."""
+        for post in util.randomized(_get(url).json()['data']['children']):
+            data = post['data']
+            url = data['url']
+            image_path = self.download(url, no_repeat)
 
-        try:
-            url, image_path = next(filter(None, util.random_map(
-                download, urls.keys()
-            )))
-        except StopIteration:
-            Logger.error('Could not find new image')
-            sys.exit(1)
+            if image_path is None:
+                continue
+            else:
+                break
+        else:
+            return None
 
-        post = urls[url]
-        Logger.info('Post: %s', post['permalink'])
-        Logger.info('Title: %s', post['title'])
+        Logger.info('Post: %s', data['permalink'])
+        Logger.info('Title: %s', data['title'])
         Logger.info('Image: %s', url)
         Logger.info('File: %s', image_path)
 
