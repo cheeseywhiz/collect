@@ -22,7 +22,7 @@ def disown(cmd: str):
 
 
 def randomized(list_):
-    """Shuffle the order of a sequence in place."""
+    """Yield values of a sequence in random order."""
     yield from random.choices(list_, k=len(list_))
 
 

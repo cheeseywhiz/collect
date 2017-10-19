@@ -14,9 +14,9 @@ class _ApplyDecorators(type):
     def __new__(cls, name, bases, namespace):
         self = type.__new__(cls, name, bases, namespace)
 
-        for name, value in namespace.items():
+        for name_, value in namespace.items():
             if isinstance(type(value), _Decorate):
-                setattr(self, name, value.decorator(self, value.method))
+                setattr(self, name_, value.decorator(self, value.method))
 
         return self
 
@@ -187,9 +187,8 @@ class Path(PathBase):
         """Perform self / other to join paths."""
         return self.join(other)
 
-    def open(
-            self, mode='r', buffering=-1, encoding=None, errors=None,
-            newline=None, closefd=True, opener=None):
+    def open(self, mode='r', buffering=-1, encoding=None, errors=None,
+             newline=None, closefd=True, opener=None):
         """Open the file for changing."""
         return open(
             self, mode=mode, buffering=buffering, encoding=encoding,
