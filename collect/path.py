@@ -239,6 +239,15 @@ class Path(PathBase):
         """Delete every file inside a directory file."""
         shutil.rmtree(self, ignore_errors=ignore_errors, onerror=onerror)
 
+    def remove(self):
+        """Remove a file or a directory (if empty)."""
+        if self.is_file():
+            os.remove(self)
+        elif self.is_dir():
+            os.rmdir(self)
+        else:
+            raise ValueError(f'{repr(self)} is not a file or directory')
+
     def mkdir(self, mode=0o777, *, exist_ok=False, dir_fd=None):
         """Make a directory exist under this path."""
         try:

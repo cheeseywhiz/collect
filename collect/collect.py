@@ -47,7 +47,7 @@ class Collect(_path.Path):
         if 'removed' in res.url:
             error_msg = 'Appears to be removed'
         if 'image' not in content_type:
-            error_msg = 'Not an image'
+            error_msg = f'Not an image ({content_type})'
         if 'gif' in content_type:
             error_msg = 'Is a .gif'
 
@@ -70,24 +70,21 @@ class Collect(_path.Path):
             url = data['url']
             image_path = self.download(url, no_repeat)
 
-            if image_path is None:
-                continue
-            else:
-                break
-        else:
-            return None
-
-        Logger.info('Post: %s', data['permalink'])
-        Logger.info('Title: %s', data['title'])
-        Logger.info('Image: %s', url)
-        Logger.info('File: %s', image_path)
-
-        return image_path
+            if image_path is not None:
+                Logger.info('Post: %s', data['permalink'])
+                Logger.info('Title: %s', data['title'])
+                Logger.info('Image: %s', url)
+                Logger.info('File: %s', image_path)
+                return image_path
 
     def empty(self):
         """Remove each file in this directory."""
-        super().rmtree()
-        super().mkdir()
+        if _path.Path.cwd() == self.abspath():
+            for file in self:
+                file.remove()
+        else:
+            super().rmtree()
+            super().mkdir()
 
     def random(self):
         try:

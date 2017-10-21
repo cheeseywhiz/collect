@@ -22,7 +22,8 @@ class CollectParser(argparse.ArgumentParser):
             help='Clear the cache file and the image directory.')
         super().add_argument(
             '--collect', action='store_true',
-            help='Carry out the collection with current settings.')
+            help='Carry out the collection. Usable in conjunction with '
+                 '--random if collection failed.')
         super().add_argument(
             'collector', metavar='PATH', default=DIRECTORY, nargs='?',
             type=collect.Collect,
@@ -64,22 +65,12 @@ class CollectParser(argparse.ArgumentParser):
 
         Logger.setLevel(log_level)
 
-        if False not in (args.random, args.collect):
-            self.show_help(args)
-            Logger.exit('Both --random and --collect present.')
-
         if not any((args.random, args.clear, args.collect)):
             self.show_help(args)
             sys.exit(1)
 
         self.using(args)
         args.collector.mkdir(exist_ok=True)
-
-        if args.random:
-            path = args.collector.random()
-
-            if path is not None:
-                print(path)
 
         if args.clear:
             args.collector.empty()
@@ -91,12 +82,27 @@ class CollectParser(argparse.ArgumentParser):
             path = args.collector.reddit(args.reddit_url, args.no_repeat)
 
             if path is None:
-                Logger.exit('Could not find new image')
+                Logger.debug('Could not find new image')
+                if args.random:
+                    Logger.debug('Falling back on random image')
+                    self._print_random(args)
+                else:
+                    sys.exit(1)
             else:
                 print(path)
+        elif args.random:
+            self._print_random(args)
 
         self.args = args
         return args
+
+    def _print_random(self, args):
+        path = args.collector.random()
+
+        if path is not None:
+            print(path)
+        else:
+            Logger.debug('Random image not found')
 
     def show_help(self, args):
         """Show usage if not verbose or full help otherwise."""
@@ -110,28 +116,27 @@ class CollectParser(argparse.ArgumentParser):
         usages = []
         parts = ['Using ']
 
-        if args.random:
-            usages.append('random path output option')
-        elif args.clear:
+        if args.clear:
             usages.append('directory clear option')
-        elif args.collect:
+        if args.collect:
             usages.append('collect image option')
             if args.no_repeat:
                 usages.append('no repeat option')
+        if args.random:
+            usages.append('random path output option')
 
         usages.extend(filter(None, (
             (f'image directory {args.collector}'
-             if str(args.collector) != DIRECTORY
+             if args.collector != DIRECTORY
              else None),
             (f'URL {args.reddit_url}'
-             if str(args.reddit_url) != REDDIT_URL
+             if args.reddit_url != REDDIT_URL
              else None),
         )))
 
         for i, item in enumerate(usages, 1):
             parts.append(item)
             if len(usages) == i:
-                parts.append('.')
                 break
             elif len(usages) != 2:
                 parts.append(',')

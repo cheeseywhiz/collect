@@ -1,6 +1,7 @@
 ifdef VIRTUAL_ENV
 	USER_FLAG=
-	LN_CMD=
+	RM_EXISTING_EXE=
+	LINK_EXE=
 else
 	USER_FLAG=--user
 	LINK_EXE=ln -s $(HOME)/.local/bin/collect /usr/bin/collect

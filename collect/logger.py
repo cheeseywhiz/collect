@@ -30,10 +30,6 @@ class Logger(logging.Logger):
         self.handler = StdErrHandler()
         super().addHandler(self.handler)
 
-    def log(self, *args, **kwargs):
-        super().info(*args, **kwargs)
-        return self
-
     def exit(self, *args, **kwargs):
         """Log the error and exit with status code 1."""
         super().error(*args, **kwargs)
