@@ -82,7 +82,7 @@ class CollectParser(argparse.ArgumentParser):
             path = args.collector.reddit(args.reddit_url, args.no_repeat)
 
             if path is None:
-                Logger.debug('Could not find new image')
+                Logger.debug('Failed to carry out the collection')
                 if args.random:
                     Logger.debug('Falling back on random image')
                     self._print_random(args)
