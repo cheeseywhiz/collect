@@ -1,11 +1,11 @@
-"""python setup.py install"""
 import setuptools
+from collect import config
 
 setuptools.setup(
     name='collect',
-    version='1.0',
+    version=config.VERSION,
     packages=['collect'],
-    install_requires=['requests'],
+    install_requires=['python-magic', 'requests'],
     entry_points={
         "console_scripts": ["collect=collect.__main__:main"]
     },)

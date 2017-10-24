@@ -4,12 +4,15 @@ from urllib.parse import urlparse
 
 import requests
 
+from . import config
 from . import util
 from .logger import Logger
 from . import path as _path
 
 __all__ = ['Collect']
-_get = functools.partial(requests.get, headers={'User-Agent': 'collect/1.0'})
+_get = functools.partial(requests.get, headers={
+    'User-Agent': f'collect/{config.VERSION}'
+})
 
 
 class Collect(_path.Path):
@@ -23,7 +26,7 @@ class Collect(_path.Path):
         if super().exists() and not super().is_dir():
             raise NotADirectoryError(
                 ('Attempted to instantiate Collect without a directory '
-                 f'path. Path: {self}'))
+                 f'path ({self})'))
 
     def download(self, url, no_repeat=False):
         """Save a picture to the path. Returns Path object of new image if
@@ -57,7 +60,7 @@ class Collect(_path.Path):
 
         Logger.debug('Collected new image: %s', url)
 
-        with image_path.open('wb') as file:
+        with open(image_path, 'wb') as file:
             file.write(res.content)
 
         return image_path
@@ -71,20 +74,11 @@ class Collect(_path.Path):
             image_path = self.download(url, no_repeat)
 
             if image_path is not None:
-                Logger.info('Post: %s', data['permalink'])
                 Logger.info('Title: %s', data['title'])
+                Logger.info('Post: %s', data['permalink'])
                 Logger.info('Image: %s', url)
                 Logger.info('File: %s', image_path)
                 return image_path
-
-    def empty(self):
-        """Remove each file in this directory."""
-        if _path.Path.cwd() == self.abspath():
-            for file in self:
-                file.remove()
-        else:
-            super().rmtree()
-            super().mkdir()
 
     def random(self):
         try:

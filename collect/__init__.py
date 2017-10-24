@@ -4,6 +4,6 @@ from .logger import Logger
 from . import path
 from . import util
 
-__all__ = ['collect', 'Logger', 'path', 'util']
+__all__ = ['collect', 'path', 'util']
 
 Logger.name = __name__

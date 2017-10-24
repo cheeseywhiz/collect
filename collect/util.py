@@ -1,24 +1,12 @@
 """Provides general utility functions"""
 import random
-import shlex
 import subprocess
 import time
 
 from .logger import Logger
 from . import config
 
-__all__ = [
-    'disown', 'randomized', 'wait_for_connection']
-
-
-# inspired by pywal.util.disown
-def disown(cmd: str):
-    """Hide a command's output."""
-    process = subprocess.Popen(
-        shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    process.communicate()
-
-    return process
+__all__ = ['randomized', 'wait_for_connection']
 
 
 def randomized(list_):
@@ -26,12 +14,17 @@ def randomized(list_):
     yield from random.choices(list_, k=len(list_))
 
 
-def wait_for_connection(max_seconds=60, seconds_wait=5, ip_address='8.8.8.8'):
+def wait_for_connection(n_tries=10, seconds_wait=5, ip_address='8.8.8.8'):
     """Return whether or not a test ping was successful."""
     count_flag = '-n' if config.WINDOWS else '-c'
 
-    for n_try in range(max_seconds // seconds_wait):
-        if disown(f'ping {count_flag} 1 -w 1 {ip_address}').wait():
+    for n_try in range(n_tries):
+        ping = subprocess.Popen(
+            ['ping', count_flag, str(1), '-w', str(1), ip_address],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        ping.communicate()
+        if ping.wait():
             Logger.warning('Connection not found')
             time.sleep(seconds_wait)
         elif n_try:

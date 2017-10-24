@@ -1,7 +1,9 @@
 import functools
+import mimetypes
 import os
 import shutil
-import subprocess
+
+import magic
 
 from . import config
 
@@ -248,6 +250,11 @@ class Path(PathBase):
         else:
             raise ValueError(f'{repr(self)} is not a file or directory')
 
+    def remove_contents(self):
+        """Remove each file within a directory."""
+        for file in self:
+            file.remove()
+
     def mkdir(self, mode=0o777, *, exist_ok=False, dir_fd=None):
         """Make a directory exist under this path."""
         try:
@@ -264,9 +271,17 @@ class Path(PathBase):
     @property
     def type(self):
         """Return the MIME type of this file."""
-        return subprocess.Popen(
-            ['file', '--mime-type', self], stdout=subprocess.PIPE
-        ).communicate()[0].decode().split(': ')[1][:-1]
+        self_path = os.fspath(self)
+        mime_type, encoding = mimetypes.guess_type(self_path, strict=False)
+
+        if mime_type is None:
+            try:
+                return magic.from_file(self_path, mime=True)
+            except IsADirectoryError:
+                # mimic file(1) behavior
+                return 'inode/directory'
+        else:
+            return mime_type
 
     @property
     def tree(self):

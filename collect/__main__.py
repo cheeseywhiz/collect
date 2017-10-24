@@ -13,37 +13,51 @@ __all__ = ['CollectParser', 'main']
 
 
 class CollectParser(argparse.ArgumentParser):
-    """Configured Argument Parser for collect script."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        super().add_argument(
-            '--clear', action='store_true',
-            help='Clear the cache file and the image directory.')
-        super().add_argument(
-            '--collect', action='store_true',
-            help='Carry out the collection. Usable in conjunction with '
-                 '--random if collection failed.')
-        super().add_argument(
-            'collector', metavar='PATH', default=DIRECTORY, nargs='?',
-            type=collect.Collect,
-            help=f'Set where images are downloaded to. Default {DIRECTORY}')
-        super().add_argument(
-            '--no-repeat', action='store_true',
+        self.subcommands = {
+            'reddit': self.reddit,
+            'random': self.random,
+            'clear': self.clear,
+        }
+        commands = super().add_subparsers(
+            title='Subcommands', dest='subcommand',
+            parser_class=argparse.ArgumentParser)
+
+        reddit = commands.add_parser(
+            'reddit',
+            description='Carry out the collection.')
+        reddit.add_argument(
+            '-n', action='store_true', dest='no_repeat_flag',
             help='Collect a new image each time.')
-        super().add_argument(
-            '--random', action='store_true',
-            help='Print out a random image path in the collection folder.')
-        super().add_argument(
-            '-u', metavar='URL', dest='reddit_url', default=REDDIT_URL,
+        reddit.add_argument(
+            '-r', action='store_true', dest='random_flag',
+            help='Print random file if collection fails.'
+        )
+        reddit.add_argument(
+            '--url', metavar='URL', dest='reddit_url', default=REDDIT_URL,
             help=f'Set the URL for the Reddit json API. Default {REDDIT_URL}')
+
+        commands.add_parser(
+            'random',
+            description='Print out a random image path in the collection '
+                        'folder.')
+
+        commands.add_parser(
+            'clear',
+            description='Clear the image directory.')
+
+        super().add_argument(
+            '--dir', metavar='PATH', dest='collector', default=DIRECTORY,
+            type=collect.Collect,
+            help=f'Set the download location. Default {DIRECTORY}')
+
         super().add_argument(
             '-v', action='count',
-            help='Output post information or -vv for debug information.')
+            help='Set verbosity level.')
+        super().set_defaults(exit=0)
 
     def parse_args(self, argv=None, *args, **kwargs):
-        """Parse args and launch the proper programs. Default for argv is to
-        use sys.argv. argv accepts str or list of arguments."""
         if argv is None:
             argv = sys.argv[1:]
         elif isinstance(argv, str):
@@ -62,98 +76,58 @@ class CollectParser(argparse.ArgumentParser):
             1: 'INFO',
             2: 'DEBUG',
         }[args.v]
-
         Logger.setLevel(log_level)
 
-        if not any((args.random, args.clear, args.collect)):
-            self.show_help(args)
-            sys.exit(1)
+        subcommand_func = self.subcommands.get(args.subcommand)
 
-        self.using(args)
-        args.collector.mkdir(exist_ok=True)
-
-        if args.clear:
-            args.collector.empty()
-
-        if args.collect:
-            if not util.wait_for_connection():
-                Logger.exit('Could not connect to the internet')
-
-            path = args.collector.reddit(args.reddit_url, args.no_repeat)
-
-            if path is None:
-                Logger.debug('Failed to carry out the collection')
-                if args.random:
-                    Logger.debug('Falling back on random image')
-                    self._print_random(args)
-                else:
-                    sys.exit(1)
+        if subcommand_func is None:
+            args.exit = 1
+            if args.v:
+                super().print_help(file=sys.stderr)
             else:
-                print(path)
-        elif args.random:
-            self._print_random(args)
+                super().print_usage(file=sys.stderr)
+        else:
+            args.collector.mkdir(exist_ok=True)
+            path = subcommand_func(args)
 
-        self.args = args
+            if path is not None:
+                print(path)
+            elif args.subcommand != 'clear':
+                args.exit = 1
+
         return args
 
-    def _print_random(self, args):
-        path = args.collector.random()
+    def reddit(self, args):
+        if not util.wait_for_connection():
+            Logger.error('Could not connect to the internet')
+            return
 
-        if path is not None:
-            print(path)
-        else:
-            Logger.debug('Random image not found')
+        path = args.collector.reddit(args.reddit_url, args.no_repeat_flag)
 
-    def show_help(self, args):
-        """Show usage if not verbose or full help otherwise."""
-        if args.v:
-            super().print_help(file=sys.stderr)
-        else:
-            super().print_usage(file=sys.stderr)
+        if path is None:
+            Logger.debug('Failed to carry out the collection')
+            if args.random_flag:
+                Logger.debug('Falling back on random image')
+                path = self.random(args)
 
-    def using(self, args):
-        """Log parsed information."""
-        usages = []
-        parts = ['Using ']
+        return path
 
-        if args.clear:
-            usages.append('directory clear option')
-        if args.collect:
-            usages.append('collect image option')
-            if args.no_repeat:
-                usages.append('no repeat option')
-        if args.random:
-            usages.append('random path output option')
+    def random(self, args):
+        return args.collector.random()
 
-        usages.extend(filter(None, (
-            (f'image directory {args.collector}'
-             if args.collector != DIRECTORY
-             else None),
-            (f'URL {args.reddit_url}'
-             if args.reddit_url != REDDIT_URL
-             else None),
-        )))
-
-        for i, item in enumerate(usages, 1):
-            parts.append(item)
-            if len(usages) == i:
-                break
-            elif len(usages) != 2:
-                parts.append(',')
-            parts.append(' ')
-            if len(usages) - 1 == i:
-                parts.append('and ')
-
-        if usages:
-            Logger.debug(''.join(parts))
+    def clear(self, args):
+        args.collector.remove_contents()
 
 
 def main(argv=None):
     try:
-        CollectParser(description=description).parse_args(argv)
+        exit = CollectParser(description=description).parse_args(argv).exit
     except Exception as error:
         Logger.critical('%s: %s', error.__class__.__name__, error)
         raise
+    else:
+        if exit:
+            sys.exit(exit)
 
 
 if __name__ == '__main__':
