@@ -3,7 +3,10 @@ import mimetypes
 import os
 import shutil
 
-import magic
+try:
+    from magic import from_file as magic_from_file
+except ImportError:
+    magic_from_file = None
 
 from . import config
 
@@ -271,17 +274,17 @@ class Path(PathBase):
     @property
     def type(self):
         """Return the MIME type of this file."""
+        if self.is_dir():
+            # mimic file(1) behavior
+            return 'inode/directory'
+
         self_path = os.fspath(self)
         mime_type, encoding = mimetypes.guess_type(self_path, strict=False)
 
-        if mime_type is None:
-            try:
-                return magic.from_file(self_path, mime=True)
-            except IsADirectoryError:
-                # mimic file(1) behavior
-                return 'inode/directory'
-        else:
-            return mime_type
+        if mime_type is None and magic_from_file is not None:
+            mime_type = magic_from_file(self_path, mime=True)
+
+        return mime_type
 
     @property
     def tree(self):
