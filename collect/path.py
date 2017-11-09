@@ -30,7 +30,7 @@ class _Decorate(type):
     """Indicate to the _ApplyDecorators metaclass to apply the given decorator
     by calling the decorator with the new class as the first agument."""
     def __new__(cls, decorator):
-        name = f'Decorate_{decorator.__name__}_At_Class_Creation'
+        name = 'Decorate_%s_At_Class_Creation' % decorator.__name__
         bases = (_Decorate.Base, )
         namespace = {
             'decorator': staticmethod(decorator),
@@ -42,7 +42,7 @@ class _Decorate(type):
         cls = self.__class__
         module = cls.__module__
         name = cls.__name__
-        return f'{module}.{name}({self.decorator !r})'
+        return '%s.%s(%r)' % (module, name, self.decorator)
 
     class Base:
         """Apply %r on new class instances."""
@@ -155,7 +155,7 @@ class PathBase(metaclass=PathMeta):
         cls = self.__class__
         module = cls.__module__
         name = cls.__name__
-        return f'{module}.{name}({str(self) !r})'
+        return '%s.%s(%r)' % (module, name, str(self))
 
     def __hash__(self):
         return hash(str(self))
@@ -251,7 +251,7 @@ class Path(PathBase):
         elif self.is_dir():
             os.rmdir(self)
         else:
-            raise ValueError(f'{repr(self)} is not a file or directory')
+            raise ValueError('%r is not a file or directory' % self)
 
     def remove_contents(self):
         """Remove each file within a directory."""

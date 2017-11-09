@@ -54,7 +54,8 @@ class CollectParser(argparse.ArgumentParser):
             help='Collect a new image each time.')
         reddit.add_argument(
             '--url', metavar='URL', dest='reddit_url', default=REDDIT_URL,
-            help=f'Set the URL for the Reddit json API. Default {REDDIT_URL}')
+            help='Set the URL for the Reddit json API. '
+                 'Default %s' % REDDIT_URL)
 
         commands.add_parser(
             'random',
@@ -68,8 +69,7 @@ class CollectParser(argparse.ArgumentParser):
         super().add_argument(
             '--dir', metavar='PATH', dest='collector', default=DIRECTORY,
             type=collect.Collect,
-            help=f'Set the download location. Default {DIRECTORY}')
-
+            help='Set the download location. Default %s' % DIRECTORY)
         super().add_argument(
             '-v', action='count',
             help='Set verbosity level.')
@@ -118,8 +118,11 @@ class CollectParser(argparse.ArgumentParser):
     def reddit(self, args):
         if not util.wait_for_connection():
             Logger.error('Could not connect to the internet')
-            args.exit = 1
-            return
+            if args.fail == 'all':
+                return self.random(args)
+            else:
+                args.exit = 1
+                return
 
         with log_exceptions(args, FileNotFoundError, RuntimeError):
             return args.collector.reddit(

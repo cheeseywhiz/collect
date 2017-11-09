@@ -12,7 +12,7 @@ from . import path as _path
 
 __all__ = ['Collect', 'Failsafe']
 _get = functools.partial(requests.get, headers={
-    'User-Agent': f'collect/{config.VERSION}'
+    'User-Agent': 'collect/%s' % config.VERSION
 })
 
 
@@ -37,7 +37,7 @@ class Collect(_path.Path):
         if super().exists() and not super().is_dir():
             raise NotADirectoryError(
                 ('Attempted to instantiate Collect without a directory '
-                 f'path ({self})'))
+                 'path (%s)' % self))
 
     def download(self, url, no_repeat=False):
         """Save a picture to the path. Returns Path object of new image. Can
@@ -64,7 +64,7 @@ class Collect(_path.Path):
         if 'removed' in res.url:
             error_msg = 'Appears to be removed'
         if 'image' not in content_type:
-            error_msg = f'Not an image ({content_type})'
+            error_msg = 'Not an image (%s)' % content_type
         if 'gif' in content_type:
             error_msg = 'Is a .gif'
 
@@ -82,6 +82,7 @@ class Collect(_path.Path):
         """Download a random image from a Reddit json url. Returns Path object
         of new image. Raises RuntimeError if it failed with no failsafe.
         Inherits FileNotFoundError behavior from self.random."""
+        failsafe = Failsafe(failsafe)
         existing_paths = []
 
         for post in util.randomized(_get(url).json()['data']['children']):
@@ -98,7 +99,6 @@ class Collect(_path.Path):
             else:
                 Logger.info('Title: %s', data['title'])
                 Logger.info('Post: %s', data['permalink'])
-                Logger.info('Image: %s', url)
                 break
         else:
             if failsafe is Failsafe.FAIL:
@@ -115,6 +115,7 @@ class Collect(_path.Path):
             except StopIteration:
                 pass
 
+        Logger.info('URL: %s', url)
         Logger.info('File: %s', image_path)
         return image_path
 
@@ -123,6 +124,7 @@ class Collect(_path.Path):
         if no suitable file was found."""
         for path in util.randomized(list(self)):
             if path.is_file():
+                Logger.info('File: %s', path)
                 return path
         else:
             raise FileNotFoundError('No suitable files: %s' % self)

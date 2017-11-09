@@ -1,11 +1,11 @@
 ifdef VIRTUAL_ENV
 	USER_FLAG=
-	LINK_EXE=
 	RM_EXISTING_EXE=
+	LINK_EXE=
 else
 	USER_FLAG=--user
+	RM_EXISTING_EXE=rm -f /usr/bin/collect
 	LINK_EXE=ln -s $(HOME)/.local/bin/collect /usr/bin/collect
-	RM_EXISTING_EXE=rm /usr/bin/collect
 endif
 
 all: clean
