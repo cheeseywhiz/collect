@@ -1,12 +1,12 @@
 """Provides functions for downloading images"""
 import enum
 import functools
+import random
 from urllib.parse import urlparse
 
 import requests
 
 from . import config
-from . import util
 from .logger import Logger
 from . import path as _path
 
@@ -14,6 +14,11 @@ __all__ = ['Collect', 'Failsafe']
 _get = functools.partial(requests.get, headers={
     'User-Agent': 'collect/%s' % config.VERSION
 })
+
+
+def randomized(list_):
+    """Yield values of a sequence in random order."""
+    yield from random.choices(list_, k=len(list_))
 
 
 class Failsafe(enum.Enum):
@@ -85,7 +90,7 @@ class Collect(_path.Path):
         failsafe = Failsafe(failsafe)
         existing_paths = []
 
-        for post in util.randomized(_get(url).json()['data']['children']):
+        for post in randomized(_get(url).json()['data']['children']):
             data = post['data']
             url = data['url']
 
@@ -111,7 +116,7 @@ class Collect(_path.Path):
                 if failsafe is Failsafe.ALL:
                     image_path = self.random()
                 elif failsafe is Failsafe.NEW:
-                    image_path = next(util.randomized(existing_paths))
+                    image_path = next(randomized(existing_paths))
             except StopIteration:
                 pass
 
@@ -122,7 +127,7 @@ class Collect(_path.Path):
     def random(self):
         """Return a random file within this directory. Raises FileNotFoundError
         if no suitable file was found."""
-        for path in util.randomized(list(self)):
+        for path in randomized(list(self)):
             if path.is_file():
                 Logger.info('File: %s', path)
                 return path
