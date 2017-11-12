@@ -1,22 +1,27 @@
 ifdef VIRTUAL_ENV
 	USER_FLAG=
-	RM_EXISTING_EXE=
-	LINK_EXE=
+	BIN_DIR=$(VIRTUAL_ENV)/bin
+	EXE_FILE=$(BIN_DIR)/collect
 else
 	USER_FLAG=--user
-	RM_EXISTING_EXE=rm -f /usr/bin/collect
-	LINK_EXE=ln -s $(HOME)/.local/bin/collect /usr/bin/collect
+	BIN_DIR=/usr/bin
+	EXE_FILE=$(BIN_DIR)/collect
 endif
 
-all: clean
+
+all: chkdep clean
+	python setup.py install --record files.txt --force $(USER_FLAG)
 
 install:
-	@python setup.py install --record files.txt --force $(USER_FLAG)
-	@$(RM_EXISTING_EXE)
-	@$(LINK_EXE)
+	mkdir -p $(BIN_DIR)
+	install collect.sh $(EXE_FILE)
+	@echo $(EXE_FILE) >> files.txt
 
 uninstall:
 	@cat files.txt | xargs rm -rf
 
+chkdep:
+	python -c "import requests, magic"
+
 clean:
-	@rm -rf build *.egg-info dist **/__pycache__
+	rm -rf build *.egg-info dist **/__pycache__

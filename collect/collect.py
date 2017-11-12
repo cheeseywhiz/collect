@@ -1,12 +1,12 @@
 """Provides functions for downloading images"""
 import enum
 import functools
+import random
 from urllib.parse import urlparse
 
 import requests
 
 from . import config
-from . import util
 from .logger import Logger
 from . import path as _path
 
@@ -14,6 +14,11 @@ __all__ = ['Collect', 'Failsafe']
 _get = functools.partial(requests.get, headers={
     'User-Agent': 'collect/%s' % config.VERSION
 })
+
+
+def randomized(list_):
+    """Yield values of a sequence in random order."""
+    yield from random.choices(list_, k=len(list_))
 
 
 class Failsafe(enum.Enum):

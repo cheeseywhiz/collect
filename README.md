@@ -4,8 +4,9 @@ install:
     [sudo] make install
 ```
 
-`make install` installs as `--user` if not in a virtual environment. Root access
-is required for symbolically linking the `$HOME/.local/bin` script to `/usr/bin`.
+`make` installs as `--user` if not in a virtual environment. Root access is
+required for installing the script in `/usr/bin` if not in a virtual
+environment.
 
 ```
 usage: collect [-h] [--clear] [--collect] [--no-repeat] [--random] [-u URL]

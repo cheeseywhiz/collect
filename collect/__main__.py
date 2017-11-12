@@ -2,15 +2,38 @@
 import argparse
 import contextlib
 import shlex
+import subprocess
 import sys
+import time
 
 from . import collect
-from .config import DIRECTORY, REDDIT_URL
+from . import config
 from .logger import Logger
-from . import util
 from . import __doc__
 
 __all__ = ['CollectParser', 'main']
+
+
+def wait_for_connection(n_tries=10, seconds_wait=5, ip_address='8.8.8.8'):
+    """Return whether or not a test ping was successful."""
+    count_flag = '-n' if config.WINDOWS else '-c'
+
+    for n_try in range(n_tries):
+        ping = subprocess.Popen(
+            ['ping', count_flag, str(1), '-w', str(1), ip_address],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        ping.communicate()
+        if ping.wait():
+            Logger.warning('Connection not found')
+            time.sleep(seconds_wait)
+        elif n_try:
+            Logger.warning('Connection found')
+            return True
+        else:
+            return True
+    else:  # no break; really no internet connection
+        return False
 
 
 @contextlib.contextmanager
@@ -53,9 +76,10 @@ class CollectParser(argparse.ArgumentParser):
             '-n', action='store_true', dest='no_repeat_flag',
             help='Collect a new image each time.')
         reddit.add_argument(
-            '--url', metavar='URL', dest='reddit_url', default=REDDIT_URL,
+            '--url', metavar='URL', dest='reddit_url',
+            default=config.REDDIT_URL,
             help='Set the URL for the Reddit json API. '
-                 'Default %s' % REDDIT_URL)
+                 'Default %s' % config.REDDIT_URL)
 
         commands.add_parser(
             'random',
@@ -67,9 +91,9 @@ class CollectParser(argparse.ArgumentParser):
             description='Clear the image directory.')
 
         super().add_argument(
-            '--dir', metavar='PATH', dest='collector', default=DIRECTORY,
-            type=collect.Collect,
-            help='Set the download location. Default %s' % DIRECTORY)
+            '--dir', metavar='PATH', dest='collector',
+            default=config.DIRECTORY, type=collect.Collect,
+            help='Set the download location. Default %s' % config.DIRECTORY)
         super().add_argument(
             '-v', action='count',
             help='Set verbosity level.')
@@ -116,7 +140,7 @@ class CollectParser(argparse.ArgumentParser):
         return args
 
     def reddit(self, args):
-        if not util.wait_for_connection():
+        if not wait_for_connection():
             Logger.error('Could not connect to the internet')
             if args.fail == 'all':
                 return self.random(args)
