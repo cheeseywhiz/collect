@@ -18,7 +18,7 @@ _get = functools.partial(requests.get, headers={
 
 def randomized(list_):
     """Yield values of a sequence in random order."""
-    yield from random.choices(list_, k=len(list_))
+    yield from random.sample(list_, len(list_))
 
 
 class Failsafe(enum.Enum):
