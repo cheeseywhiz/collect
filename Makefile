@@ -1,27 +1,34 @@
+PWD:=$(realpath $(dir $(lastword $(MAKEFILE_LIST))))
+
+INSTALL_FLAGS=
+
 ifdef VIRTUAL_ENV
-	USER_FLAG=
-	BIN_DIR=$(VIRTUAL_ENV)/bin
-	EXE_FILE=$(BIN_DIR)/collect
+	PRE:=$(VIRTUAL_ENV)
 else
-	USER_FLAG=--user
-	BIN_DIR=/usr/bin
-	EXE_FILE=$(BIN_DIR)/collect
+	INSTALL_FLAGS+=--user
+	PRE:=/usr
 endif
 
+BIN=$(PRE)/bin
 
-all: chkdep clean
-	python setup.py install --record files.txt --force $(USER_FLAG)
+all: setup
 
-install:
-	mkdir -p $(BIN_DIR)
-	install collect.sh $(EXE_FILE)
-	@echo $(EXE_FILE) >> files.txt
+setup: $(PWD)/setup.py
+	python $< install $(INSTALL_FLAGS)
+
+$(PRE)/%:
+	mkdir -p $@
+
+$(BIN)/collect: $(PWD)/collect.sh $(BIN)
+	install $< $@
+
+install: $(BIN)/collect
 
 uninstall:
-	@cat files.txt | xargs rm -rf
-
-chkdep:
-	python -c "import requests, magic"
+	rm -rf $(BIN)/collect
+	pip uninstall --yes collect
 
 clean:
 	rm -rf build *.egg-info dist **/__pycache__
+
+.PHONY: all setup install uninstall clean
