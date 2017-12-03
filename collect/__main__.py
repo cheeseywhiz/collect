@@ -65,18 +65,16 @@ class CollectParser(argparse.ArgumentParser):
             'reddit',
             description='Carry out the collection.')
         reddit.add_argument(
-            '--fail', default='fail', choices=[
-                name.lower()
-                for name in collect.Failsafe.__members__.keys()
-                if name != 'FAIL'],
-            help='Print random file path if collection fails. all: pull '
-                 'random path from collection directory. new: pull random '
-                 'path from provided URL.')
+            '--all', '-a', action='store_true', dest='all',
+            help='Print a random file if collection failed.')
         reddit.add_argument(
-            '-n', action='store_true', dest='no_repeat_flag',
-            help='Collect a new image each time.')
+            '--new', '-n', action='store_true', dest='new',
+            help='Print a file from the json API if collection failed.')
         reddit.add_argument(
-            '--url', metavar='URL', dest='reddit_url',
+            '--no-repeat', '-r', action='store_true', dest='no_repeat',
+            help='Fail if each url from the json API has been downloaded.')
+        reddit.add_argument(
+            '--url', '-u', metavar='URL', dest='reddit_url',
             default=config.REDDIT_URL,
             help='Set the URL for the Reddit json API. '
                  'Default %s' % config.REDDIT_URL)
@@ -140,19 +138,23 @@ class CollectParser(argparse.ArgumentParser):
         return args
 
     def reddit(self, args):
+        flags = collect.NO_REPEAT if args.no_repeat else 0
+
+        if args.all:
+            flags |= collect.ALL
+        elif args.new:
+            flags |= collect.NEW
+
         if not wait_for_connection():
             Logger.error('Could not connect to the internet')
-            if args.fail == 'all':
+            if args.all:
                 return self.random(args)
             else:
                 args.exit = 1
                 return
 
         with log_exceptions(args, FileNotFoundError, RuntimeError):
-            return args.collector.reddit(
-                args.reddit_url, args.no_repeat_flag,
-                getattr(collect.Failsafe, args.fail.upper())
-            )
+            return args.collector.reddit(args.reddit_url, flags)
 
     def random(self, args):
         with log_exceptions(args, FileNotFoundError):
@@ -164,7 +166,7 @@ class CollectParser(argparse.ArgumentParser):
 
 def main(argv=None):
     try:
-        exit = CollectParser().parse_args(argv).exit
+        exit = CollectParser(prog='collect').parse_args(argv).exit
     except Exception as error:
         Logger.critical('%s: %s', error.__class__.__name__, error)
         raise

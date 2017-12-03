@@ -1,6 +1,7 @@
 import functools
 import mimetypes
 import os
+from urllib.parse import urlparse
 import shutil
 
 try:
@@ -62,7 +63,7 @@ class PathMeta(_ApplyDecorators):
         """Return the current working directory."""
         return self(path=os.getcwd())
 
-    def from_str(self, func):
+    def cast_one_arg(self, func):
         """Wrap a function such that the result is passed to a new instance of
         this class."""
         @functools.wraps(func)
@@ -71,7 +72,7 @@ class PathMeta(_ApplyDecorators):
 
         return wrapper
 
-    MakeStr = _Decorate(from_str)
+    CastCls = _Decorate(cast_one_arg)
 
 
 class PathBase(metaclass=PathMeta):
@@ -138,6 +139,17 @@ class PathBase(metaclass=PathMeta):
         else:
             return -1
 
+    @staticmethod
+    def url_fname(url):
+        """Return the filename part of a url."""
+        url_parts = urlparse(url).path.split('/')
+
+        if not url_parts[-1]:
+            # url path ends in literal /
+            url_parts.pop()
+
+        return url_parts[-1]
+
     def __fspath__(self):
         """Return the file system representation of the path."""
         return self.__path
@@ -164,17 +176,17 @@ class PathBase(metaclass=PathMeta):
 class Path(PathBase):
     """Provides high level and cross platform file system manipulations on
     paths."""
-    @PathBase.MakeStr
+    @PathBase.CastCls
     def join(self, *others):
         """Connect one or more file names onto this path."""
         return os.path.join(self, *others)
 
-    @PathBase.MakeStr
+    @PathBase.CastCls
     def realpath(self):
         """Return the absolute path and eliminate symbolic links."""
         return os.path.realpath(self)
 
-    @PathBase.MakeStr
+    @PathBase.CastCls
     def relpath(self, start=None):
         """Return the abbreviated form of self relative to start. Default for
         start is the current working directory."""
@@ -183,7 +195,7 @@ class Path(PathBase):
 
         return os.path.relpath(self, start)
 
-    @PathBase.MakeStr
+    @PathBase.CastCls
     def abspath(self):
         """Return the absolute path."""
         return os.path.abspath(self)
@@ -191,6 +203,10 @@ class Path(PathBase):
     def __truediv__(self, other):
         """Perform self / other to join paths."""
         return self.join(other)
+
+    def url_fname(self, url):
+        """Join the filename part of a url to this path."""
+        return self / super().url_fname(url)
 
     def open(self, mode='r', buffering=-1, encoding=None, errors=None,
              newline=None, closefd=True, opener=None):
