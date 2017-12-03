@@ -6,7 +6,7 @@ from . import path
 __all__ = ['DIRECTORY', 'REDDIT_URL', 'WINDOWS']
 
 VERSION = '1.3'
-REDDIT_URL = 'https://www.reddit.com/r/earthporn/hot/.json?limit=10'
+REDDIT_URL = 'r/earthporn/hot?limit=10'
 WINDOWS = os.name == 'nt'
 
 if WINDOWS:

@@ -2,6 +2,7 @@
 import functools
 import random
 
+import praw
 import requests
 
 from . import config
@@ -12,6 +13,8 @@ from .flags import __all__ as _flags_all
 
 __all__ = ['RedditSubmissionWrapper', 'RedditListingWrapper', 'Collect']
 __all__.extend(_flags_all)
+
+_reddit = praw.Reddit()
 
 _get = functools.partial(requests.get, headers={
     'User-Agent': 'collect/%s' % config.VERSION
@@ -52,7 +55,7 @@ class RedditSubmissionWrapper:
 
     def __init__(self, parent_path, data):
         self.data = data
-        self.url = self.data['url']
+        self.url = self.data.url
         self.path = parent_path.url_fname(self.url)
 
     def download(self):
@@ -68,9 +71,9 @@ class RedditSubmissionWrapper:
 
     def log(self):
         """Log the submission's title, comment URL, and link URL."""
-        Logger.info('Title: %s', self.data['title'])
-        Logger.info('Post: %s', self.data['permalink'])
-        Logger.info('URL: %s', self.data['url'])
+        Logger.info('Title: %s', self.data.title)
+        Logger.info('Post: %s', self.data.permalink)
+        Logger.info('URL: %s', self.data.url)
 
 
 class RedditListingWrapper:
@@ -80,7 +83,8 @@ class RedditListingWrapper:
     def __init__(self, path, api_url):
         self.path = Collect(path)
         self.url = api_url
-        self.posts = _randomized(_get(api_url).json()['data']['children'])
+        self.listing = _reddit.get(api_url)
+        self.posts = _randomized(list(self.listing))
         self.existing_paths = {}
 
     def __iter__(self):
@@ -90,7 +94,7 @@ class RedditListingWrapper:
     def __next__(self):
         """Return the next submission in the listing in a random order while
         noting if the submission's corresponding already exists."""
-        post = RedditSubmissionWrapper(self.path, next(self.posts)['data'])
+        post = RedditSubmissionWrapper(self.path, next(self.posts))
 
         if self.path == post.path:
             return next(self)

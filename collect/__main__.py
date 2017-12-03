@@ -71,14 +71,15 @@ class CollectParser(argparse.ArgumentParser):
             help='Print a random file if collection failed.')
         reddit.add_argument(
             '--new', '-n', action='store_true', dest='new',
-            help='Print a file from the json API if collection failed.')
+            help='Print a file from the recent listing if collection '
+                 'failed.')
         reddit.add_argument(
             '--no-repeat', '-r', action='store_true', dest='no_repeat',
-            help='Fail if each url from the json API has been downloaded.')
+            help='Fail if each URL in the listing has been downloaded.')
         reddit.add_argument(
             '--url', '-u', metavar='URL', dest='reddit_url',
             default=config.REDDIT_URL,
-            help='Set the URL for the Reddit json API. '
+            help='Set the URL for the Reddit API listing. '
                  'Default %s' % config.REDDIT_URL)
 
         commands.add_parser(
