@@ -9,24 +9,31 @@ required for installing the script in `/usr/bin` if not in a virtual
 environment.
 
 ```
-usage: collect [-h] [--clear] [--collect] [--no-repeat] [--random] [-u URL]
-               [-v]
-               [PATH]
+usage: collect [-h] [--dir PATH] [-v] {reddit,random,clear} ...
 
-Automate downloading an image from the Reddit json API.
-
-positional arguments:
-  PATH         Set where images are downloaded to. Default
-               $HOME/.cache/collect
+Automate downloading an image using the Reddit API.
 
 optional arguments:
-  -h, --help   show this help message and exit
-  --clear      Clear the cache file and the image directory.
-  --collect    Carry out the collection. Usable in conjunction with --random
-               if collection failed.
-  --no-repeat  Collect a new image each time.
-  --random     Print out a random image path in the collection folder.
-  -u URL       Set the URL for the Reddit json API. Default
-               https://www.reddit.com/r/earthporn/hot/.json?limit=10
-  -v           Output post information or -vv for debug information.
+  -h, --help            show this help message and exit
+  --dir PATH            Set the download location. Default
+                        $HOME/.cache/collect
+  -v                    Set verbosity level.
+
+Subcommands:
+  {reddit,random,clear}
+```
+
+```
+usage: collect reddit [-h] [--all] [--new] [--no-repeat] [--url URL]
+
+Carry out the collection.
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --all, -a          Print a random file if collection failed.
+  --new, -n          Print a file from the recent listing if collection
+                     failed.
+  --no-repeat, -r    Fail if each URL in the listing has been downloaded.
+  --url URL, -u URL  Set the URL for the Reddit API listing. Default
+                     r/earthporn/hot?limit=10
 ```

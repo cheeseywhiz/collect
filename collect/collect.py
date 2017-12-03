@@ -1,135 +1,212 @@
 """Provides functions for downloading images"""
-import enum
 import functools
 import random
-from urllib.parse import urlparse
 
+import praw
 import requests
 
 from . import config
 from .logger import Logger
 from . import path as _path
+from .flags import *
+from .flags import __all__ as _flags_all
 
-__all__ = ['Collect', 'Failsafe']
+__all__ = ['RedditSubmissionWrapper', 'RedditListingWrapper', 'Collect']
+__all__.extend(_flags_all)
+
+_reddit = praw.Reddit()
+
 _get = functools.partial(requests.get, headers={
     'User-Agent': 'collect/%s' % config.VERSION
 })
 
 
-def randomized(list_):
+def _randomized(list_):
     """Yield values of a sequence in random order."""
     yield from random.sample(list_, len(list_))
 
 
-class Failsafe(enum.Enum):
-    """Specify location for a new random path if Reddit collection fails.
-    FAIL: do nothing
-    ALL: from specified directory
-    NEW: from specified URL"""
-    FAIL = 0b00
-    ALL = 0b01
-    NEW = 0b10
+def _verify_image_response(res):
+    error_msg = None
+    content_type = res.headers['content-type']
+
+    if 'removed' in res.url:
+        error_msg = 'Appears to be removed (%s)' % res.url
+    if 'image' not in content_type:
+        error_msg = 'Not an image (%s)' % content_type
+    if 'gif' in content_type:
+        error_msg = 'Is a .gif (%s)' % content_type
+
+    if error_msg is not None:
+        strerr = '%s: %s' % (error_msg, res.url)
+        Logger.debug(strerr)
+        raise ValueError(strerr)
+
+
+def _get_image(url):
+    res = _get(url)
+    _verify_image_response(res)
+    return res
+
+
+class RedditSubmissionWrapper:
+    """Wrapper for Reddit submission objects to facilitate logging and URL
+    downloading."""
+
+    def __init__(self, parent_path, data):
+        self.data = data
+        self.url = self.data.url
+        self.path = parent_path.url_fname(self.url)
+
+    def download(self):
+        """Save a picture to this path. Raises ValueError if the HTTP response
+        indicates that we did not receive an image."""
+        res = _get_image(self.url)
+
+        with open(self.path, 'wb') as file:
+            file.write(res.content)
+
+        Logger.debug('Collected new image: %s', self.url)
+        return self
+
+    def log(self):
+        """Log the submission's title, comment URL, and link URL."""
+        Logger.info('Title: %s', self.data.title)
+        Logger.info('Post: %s', self.data.permalink)
+        Logger.info('URL: %s', self.data.url)
+
+
+class RedditListingWrapper:
+    """Wrapper for Reddit listing generators to facilitate image downloading
+    and handling certain behaviors."""
+
+    def __init__(self, path, api_url):
+        self.path = Collect(path)
+        self.url = api_url
+        self.listing = _reddit.get(api_url)
+        self.posts = _randomized(list(self.listing))
+        self.existing_paths = {}
+
+    def __iter__(self):
+        """Allow self to be used as an iterator."""
+        return self
+
+    def __next__(self):
+        """Return the next submission in the listing in a random order while
+        noting if the submission's corresponding already exists."""
+        post = RedditSubmissionWrapper(self.path, next(self.posts))
+
+        if self.path == post.path:
+            return next(self)
+
+        if post.path.exists():
+            Logger.debug('Already downloaded: %s' % post.url)
+            self.existing_paths[post.path] = post
+            return post
+
+        return post
+
+    def next_download(self):
+        """next(self) while downloading the submission's image."""
+        post = next(self)
+
+        if post.path in self.existing_paths:
+            return post
+
+        try:
+            post.download()
+        except ValueError as error:
+            return self.next_download()
+        else:
+            return post
+
+    def next_no_repeat(self):
+        """next(self) while skipping submissions that have already been
+        collected."""
+        post = next(self)
+
+        if post.path in self.existing_paths:
+            return self.next_no_repeat()
+        else:
+            return post
+
+    def next_no_repeat_download(self):
+        """self.next_no_repeat() while downloading the submisson's image."""
+        post = self.next_download()
+
+        if post.path in self.existing_paths:
+            return self.next_no_repeat_download()
+        else:
+            return post
+
+    def flags_next_download(self, flags):
+        """Download the next submission's image according to the specified
+        flags."""
+        if flags & NO_REPEAT:
+            return self.next_no_repeat_download()
+        else:
+            return self.next_download()
+
+    def _random(self):
+        image_path = self.path.random()
+        post = self.existing_paths.get(image_path)
+        return image_path, post
+
+    def _flags_handle_stop(self, flags):
+        if flags & NEW:
+            Logger.debug('Falling back on image from new')
+            try:
+                return next(_randomized(
+                    self.existing_paths.items()
+                ))
+            except StopIteration:
+                pass
+
+        if flags & ALL:
+            Logger.debug('Falling back on image from all')
+            return self._random()
+
+        raise RuntimeError('Collection failed: %s' % self.url)
+
+    def flags_next_recover(self, flags):
+        """Download the next submission's image but handle collection errors
+        according to the flags."""
+        try:
+            post = self.flags_next_download(flags)
+        except StopIteration:
+            image_path, post = self._flags_handle_stop(flags)
+
+        if post is not None:
+            post.log()
+            image_path = post.path
+
+        Logger.info('File: %s', image_path)
+        return image_path
+
+    def __repr__(self):
+        cls = self.__class__
+        module = cls.__module__
+        name = cls.__name__
+        args = self.path, self.url
+        args_str = ', '.join(map(repr, args))
+        return '%s.%s(%s)' % (module, name, args_str)
 
 
 class Collect(_path.Path):
     """Perform image collection operations on a path."""
-    def __new__(cls, path=None):
-        self = super(_path.Path, cls).__new__(cls, path=path)
-        super(_path.Path, self).__init__(path=path)
-        return self
 
-    def __init__(self, path=None):
-        if super().exists() and not super().is_dir():
-            raise NotADirectoryError(
-                ('Attempted to instantiate Collect without a directory '
-                 'path (%s)' % self))
-
-    def download(self, url, no_repeat=False):
-        """Save a picture to the path. Returns Path object of new image. Can
-        raise FileExistsError if no_repeat is False. Raises ValueError if
-        something isn't right about the HTTP response."""
-        url_parts = urlparse(url).path.split('/')
-
-        if not url_parts[-1]:
-            # url path ends in literal /
-            url_parts.pop()
-
-        image_path = self / url_parts[-1]
-
-        if image_path.exists():
-            if no_repeat:
-                raise FileExistsError('Already downloaded: %s' % url)
-            else:
-                return image_path
-
-        error_msg = None
-        res = _get(url)
-        content_type = res.headers['content-type']
-
-        if 'removed' in res.url:
-            error_msg = 'Appears to be removed'
-        if 'image' not in content_type:
-            error_msg = 'Not an image (%s)' % content_type
-        if 'gif' in content_type:
-            error_msg = 'Is a .gif'
-
-        if error_msg is not None:
-            raise ValueError('%s: %s' % (error_msg, url))
-
-        Logger.debug('Collected new image: %s', url)
-
-        with open(image_path, 'wb') as file:
-            file.write(res.content)
-
-        return image_path
-
-    def reddit(self, url, no_repeat=False, failsafe=Failsafe.FAIL):
-        """Download a random image from a Reddit json url. Returns Path object
-        of new image. Raises RuntimeError if it failed with no failsafe.
-        Inherits FileNotFoundError behavior from self.random."""
-        failsafe = Failsafe(failsafe)
-        existing_paths = []
-
-        for post in randomized(_get(url).json()['data']['children']):
-            data = post['data']
-            url = data['url']
-
-            try:
-                image_path = self.download(url, no_repeat)
-            except FileExistsError as error:
-                existing_paths.append(self.download(url))
-                Logger.debug(str(error))
-            except ValueError as error:
-                Logger.debug(str(error))
-            else:
-                Logger.info('Title: %s', data['title'])
-                Logger.info('Post: %s', data['permalink'])
-                break
-        else:
-            if failsafe is Failsafe.FAIL:
-                raise RuntimeError('Collection failed: %s to %s' % (url, self))
-            else:
-                Logger.debug(
-                    'Falling back on image from %s', failsafe.name.lower())
-
-            try:
-                if failsafe is Failsafe.ALL:
-                    image_path = self.random()
-                elif failsafe is Failsafe.NEW:
-                    image_path = next(randomized(existing_paths))
-            except StopIteration:
-                pass
-
-        Logger.info('URL: %s', url)
-        Logger.info('File: %s', image_path)
-        return image_path
+    def reddit_listing(self, api_url):
+        """Helper for new RedditListingWrapper at this path."""
+        return RedditListingWrapper(self, api_url)
 
     def random(self):
         """Return a random file within this directory. Raises FileNotFoundError
         if no suitable file was found."""
-        for path in randomized(list(self)):
-            if path.is_file():
-                Logger.info('File: %s', path)
-                return path
-        else:
+        try:
+            return next(
+                path
+                for path in _randomized(list(self))
+                if path.is_file()
+            )
+        except StopIteration:
             raise FileNotFoundError('No suitable files: %s' % self)
