@@ -48,6 +48,8 @@ def log_exceptions(args, *exc_types):
                 Logger.debug(str(error))
                 args.exit = 1
                 break
+        else:
+            raise
 
 
 class CollectParser(argparse.ArgumentParser):
@@ -138,11 +140,12 @@ class CollectParser(argparse.ArgumentParser):
         return args
 
     def reddit(self, args):
-        flags = collect.NO_REPEAT if args.no_repeat else 0
+        flags = collect.NO_REPEAT if args.no_repeat else collect.FAIL
 
         if args.all:
             flags |= collect.ALL
-        elif args.new:
+
+        if args.new:
             flags |= collect.NEW
 
         if not wait_for_connection():

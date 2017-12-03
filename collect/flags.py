@@ -1,7 +1,7 @@
 import enum
 
 
-class _Reddit_Flags(enum.Flag):
+class _RedditFlags(enum.Flag):
     """Specify location for a new random path if Reddit collection fails. Use
     failsafe flags one at a time.
 
@@ -18,9 +18,9 @@ class _Reddit_Flags(enum.Flag):
     NO_REPEAT = enum.auto()
 
 
-FAIL = _Reddit_Flags.FAIL
-ALL = _Reddit_Flags.ALL
-NEW = _Reddit_Flags.NEW
-NO_REPEAT = _Reddit_Flags.NO_REPEAT
+FAIL = _RedditFlags.FAIL
+ALL = _RedditFlags.ALL
+NEW = _RedditFlags.NEW
+NO_REPEAT = _RedditFlags.NO_REPEAT
 
-__all__ = list(_Reddit_Flags.__members__.keys())
+__all__ = list(_RedditFlags.__members__.keys())

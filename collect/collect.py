@@ -23,6 +23,96 @@ def _randomized(list_):
     yield from random.sample(list_, len(list_))
 
 
+def _verify_image_response(res):
+    error_msg = None
+    content_type = res.headers['content-type']
+
+    if 'removed' in res.url:
+        error_msg = 'Appears to be removed (%s)' % res.url
+    if 'image' not in content_type:
+        error_msg = 'Not an image (%s)' % content_type
+    if 'gif' in content_type:
+        error_msg = 'Is a .gif (%s)' % content_type
+
+    if error_msg is not None:
+        strerr = '%s: %s' % (error_msg, res.url)
+        Logger.debug(strerr)
+        raise ValueError(strerr)
+
+
+def _get_image(url):
+    res = _get(url)
+    _verify_image_response(res)
+    return res
+
+
+class _RedditPost:
+    def __init__(self, parent_path, data):
+        self.data = data
+        self.url = self.data['url']
+        self.path = parent_path.url_fname(self.url)
+
+    def download(self):
+        """Save a picture to this path. Raises ValueError if the HTTP response
+        indicates that we did not receive an image."""
+        res = _get_image(self.url)
+
+        with open(self.path, 'wb') as file:
+            file.write(res.content)
+
+        Logger.debug('Collected new image: %s', self.url)
+        return self
+
+    def log(self):
+        Logger.info('Title: %s', self.data['title'])
+        Logger.info('Post: %s', self.data['permalink'])
+        Logger.info('URL: %s', self.data['url'])
+
+
+class _RedditJsonAPI:
+    def __init__(self, path, api_url):
+        self.path = path
+        self.url = api_url
+        self.posts = _randomized(_get(api_url).json()['data']['children'])
+        self.existing_paths = {}
+
+    def __next__(self):
+        post = _RedditPost(self.path, next(self.posts)['data'])
+
+        if self.path == post.path:
+            return next(self)
+
+        if post.path.exists():
+            Logger.debug('Already downloaded: %s' % post.url)
+            self.existing_paths[post.path] = post
+            return post
+
+        try:
+            post.download()
+        except ValueError as error:
+            return next(self)
+        else:
+            return post
+
+    def next_no_repeat(self):
+        post = next(self)
+
+        if post.path in self.existing_paths:
+            return self.next_no_repeat()
+        else:
+            return post
+
+    def recover_all(self):
+        image_path = self.path.random()
+        post = self.existing_paths.get(image_path)
+        return image_path, post
+
+    def recover_new(self):
+        return next(_randomized(
+            self.existing_paths.items()
+        ))
+
+
 class Collect(_path.Path):
     """Perform image collection operations on a path."""
     def __new__(cls, path=None):
@@ -40,88 +130,43 @@ class Collect(_path.Path):
     def url_fname(self, url):
         return super().url_fname(url)
 
-    def download(self, url):
-        """Save a picture to this path. Raises ValueError if the HTTP response
-        indicates that we did not receive an image."""
-        error_msg = None
-        res = _get(url)
-        content_type = res.headers['content-type']
+    def _api(self, api_url):
+        return _RedditJsonAPI(self, api_url)
 
-        if 'removed' in res.url:
-            error_msg = 'Appears to be removed (%s)' % res.url
-        if 'image' not in content_type:
-            error_msg = 'Not an image (%s)' % content_type
-        if 'gif' in content_type:
-            error_msg = 'Is a .gif (%s)' % content_type
+    def _api_next(self, api, flags):
+        if flags & NO_REPEAT:
+            return api.next_no_repeat()
+        else:
+            return next(api)
 
-        if error_msg is not None:
-            raise ValueError('%s: %s' % (error_msg, url))
+    def _handle_fail(self, api, flags):
+        if flags & NEW:
+            Logger.debug('Falling back on image from new')
+            try:
+                return api.recover_new()
+            except StopIteration:
+                pass
 
-        with open(self, 'wb') as file:
-            file.write(res.content)
+        if flags & ALL:
+            Logger.debug('Falling back on image from all')
+            return api.recover_all()
 
-        return self
+        raise RuntimeError('Collection failed: %s' % api.url)
 
     def reddit(self, json_url, flags=FAIL):
         """Download a random image from a Reddit json url. Returns Path object
         of new image. Raises RuntimeError if it failed with no failsafe.
         Inherits FileNotFoundError behavior from self.random."""
-        data = None
-        image_url = None
-        image_path = None
+        api = self._api(json_url)
 
-        existing_paths = {}
+        try:
+            post = self._api_next(api, flags)
+        except StopIteration:
+            image_path, post = self._handle_fail(api, flags)
 
-        for post in _randomized(_get(json_url).json()['data']['children']):
-            data = post['data']
-            image_url = data['url']
-            image_path = self.url_fname(image_url)
-
-            if self == image_path:
-                pass
-            elif image_path.exists():
-                Logger.debug('Already downloaded: %s' % image_url)
-                existing_paths[image_path] = data
-                if not flags & NO_REPEAT:
-                    break
-            else:
-                try:
-                    image_path.download(image_url)
-                except ValueError as error:
-                    Logger.debug(str(error))
-                else:
-                    Logger.debug('Collected new image: %s', image_url)
-                    break
-
-            data = None
-            image_url = None
-            image_path = None
-        else:
-            failed = False
-
-            if flags & ALL:
-                Logger.debug('Falling back on image from all')
-                image_path = self.random()
-                data = existing_paths.get(image_path)
-            elif flags & NEW:
-                Logger.debug('Falling back on image from new')
-                try:
-                    image_path, data = next(
-                        _randomized(existing_paths.items())
-                    )
-                except StopIteration:
-                    failed = True
-            else:
-                failed = True
-
-            if failed:
-                raise RuntimeError(
-                    'Collection failed: %s' % json_url)
-
-        if data is not None:
-            Logger.info('Title: %s', data['title'])
-            Logger.info('Post: %s', data['permalink'])
-            Logger.info('URL: %s', data['url'])
+        if post is not None:
+            post.log()
+            image_path = post.path
 
         Logger.info('File: %s', image_path)
         return image_path
