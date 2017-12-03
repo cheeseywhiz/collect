@@ -10,7 +10,7 @@ from . import path as _path
 from .flags import *
 from .flags import __all__ as _flags_all
 
-__all__ = ['Collect']
+__all__ = ['RedditSubmissionWrapper', 'RedditListingWrapper', 'Collect']
 __all__.extend(_flags_all)
 
 _get = functools.partial(requests.get, headers={
@@ -46,7 +46,10 @@ def _get_image(url):
     return res
 
 
-class _RedditPost:
+class RedditSubmissionWrapper:
+    """Wrapper for Reddit submission objects to facilitate logging and URL
+    downloading."""
+
     def __init__(self, parent_path, data):
         self.data = data
         self.url = self.data['url']
@@ -64,20 +67,30 @@ class _RedditPost:
         return self
 
     def log(self):
+        """Log the submission's title, comment URL, and link URL."""
         Logger.info('Title: %s', self.data['title'])
         Logger.info('Post: %s', self.data['permalink'])
         Logger.info('URL: %s', self.data['url'])
 
 
-class _RedditJsonAPI:
+class RedditListingWrapper:
+    """Wrapper for Reddit listing generators to facilitate image downloading
+    and handling certain behaviors."""
+
     def __init__(self, path, api_url):
-        self.path = path
+        self.path = Collect(path)
         self.url = api_url
         self.posts = _randomized(_get(api_url).json()['data']['children'])
         self.existing_paths = {}
 
+    def __iter__(self):
+        """Allow self to be used as an iterator."""
+        return self
+
     def __next__(self):
-        post = _RedditPost(self.path, next(self.posts)['data'])
+        """Return the next submission in the listing in a random order while
+        noting if the submission's corresponding already exists."""
+        post = RedditSubmissionWrapper(self.path, next(self.posts)['data'])
 
         if self.path == post.path:
             return next(self)
@@ -87,14 +100,25 @@ class _RedditJsonAPI:
             self.existing_paths[post.path] = post
             return post
 
+        return post
+
+    def next_download(self):
+        """next(self) while downloading the submission's image."""
+        post = next(self)
+
+        if post.path in self.existing_paths:
+            return post
+
         try:
             post.download()
         except ValueError as error:
-            return next(self)
+            return self.next_download()
         else:
             return post
 
     def next_no_repeat(self):
+        """next(self) while skipping submissions that have already been
+        collected."""
         post = next(self)
 
         if post.path in self.existing_paths:
@@ -102,67 +126,51 @@ class _RedditJsonAPI:
         else:
             return post
 
-    def recover_all(self):
+    def next_no_repeat_download(self):
+        """self.next_no_repeat() while downloading the submisson's image."""
+        post = self.next_download()
+
+        if post.path in self.existing_paths:
+            return self.next_no_repeat_download()
+        else:
+            return post
+
+    def flags_next_download(self, flags):
+        """Download the next submission's image according to the specified
+        flags."""
+        if flags & NO_REPEAT:
+            return self.next_no_repeat_download()
+        else:
+            return self.next_download()
+
+    def _random(self):
         image_path = self.path.random()
         post = self.existing_paths.get(image_path)
         return image_path, post
 
-    def recover_new(self):
-        return next(_randomized(
-            self.existing_paths.items()
-        ))
-
-
-class Collect(_path.Path):
-    """Perform image collection operations on a path."""
-    def __new__(cls, path=None):
-        self = super(_path.Path, cls).__new__(cls, path=path)
-        super(_path.Path, self).__init__(path=path)
-        return self
-
-    def __init__(self, path=None):
-        if super().exists() and not super().is_dir():
-            raise NotADirectoryError(
-                ('Attempted to instantiate Collect without a directory '
-                 'path (%s)') % self)
-
-    @_path.Path.CastCls
-    def url_fname(self, url):
-        return super().url_fname(url)
-
-    def _api(self, api_url):
-        return _RedditJsonAPI(self, api_url)
-
-    def _api_next(self, api, flags):
-        if flags & NO_REPEAT:
-            return api.next_no_repeat()
-        else:
-            return next(api)
-
-    def _handle_fail(self, api, flags):
+    def _flags_handle_stop(self, flags):
         if flags & NEW:
             Logger.debug('Falling back on image from new')
             try:
-                return api.recover_new()
+                return next(_randomized(
+                    self.existing_paths.items()
+                ))
             except StopIteration:
                 pass
 
         if flags & ALL:
             Logger.debug('Falling back on image from all')
-            return api.recover_all()
+            return self._random()
 
-        raise RuntimeError('Collection failed: %s' % api.url)
+        raise RuntimeError('Collection failed: %s' % self.url)
 
-    def reddit(self, json_url, flags=FAIL):
-        """Download a random image from a Reddit json url. Returns Path object
-        of new image. Raises RuntimeError if it failed with no failsafe.
-        Inherits FileNotFoundError behavior from self.random."""
-        api = self._api(json_url)
-
+    def flags_next_recover(self, flags):
+        """Download the next submission's image but handle collection errors
+        according to the flags."""
         try:
-            post = self._api_next(api, flags)
+            post = self.flags_next_download(flags)
         except StopIteration:
-            image_path, post = self._handle_fail(api, flags)
+            image_path, post = self._flags_handle_stop(flags)
 
         if post is not None:
             post.log()
@@ -171,11 +179,30 @@ class Collect(_path.Path):
         Logger.info('File: %s', image_path)
         return image_path
 
+    def __repr__(self):
+        cls = self.__class__
+        module = cls.__module__
+        name = cls.__name__
+        args = self.path, self.url
+        args_str = ', '.join(map(repr, args))
+        return '%s.%s(%s)' % (module, name, args_str)
+
+
+class Collect(_path.Path):
+    """Perform image collection operations on a path."""
+
+    def reddit_listing(self, api_url):
+        """Helper for new RedditListingWrapper at this path."""
+        return RedditListingWrapper(self, api_url)
+
     def random(self):
         """Return a random file within this directory. Raises FileNotFoundError
         if no suitable file was found."""
-        for path in _randomized(list(self)):
-            if path.is_file():
-                return path
-        else:
+        try:
+            return next(
+                path
+                for path in _randomized(list(self))
+                if path.is_file()
+            )
+        except StopIteration:
             raise FileNotFoundError('No suitable files: %s' % self)

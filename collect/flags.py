@@ -1,26 +1,25 @@
 import enum
 
 
-class _RedditFlags(enum.Flag):
-    """Specify location for a new random path if Reddit collection fails. Use
-    failsafe flags one at a time.
+class RedditFlags(enum.Flag):
+    """Specify location for a new random path if Reddit collection fails.
 
-    Failsafe flags (use one at a time):
-    FAIL: do nothing
-    ALL: from specified directory
-    NEW: from specified URL
+    Failsafe flags:
+    FAIL: Raise an exception
+    ALL: Return a path from all collected images in the directory
+    NEW: Return a path from the API reponse
 
     Other:
-    NO_REPEAT (use with bitwise or): collect a new image each time"""
+    NO_REPEAT: Skip paths that already exist"""
     FAIL = 0
     ALL = enum.auto()
     NEW = enum.auto()
     NO_REPEAT = enum.auto()
 
 
-FAIL = _RedditFlags.FAIL
-ALL = _RedditFlags.ALL
-NEW = _RedditFlags.NEW
-NO_REPEAT = _RedditFlags.NO_REPEAT
+FAIL = RedditFlags.FAIL
+ALL = RedditFlags.ALL
+NEW = RedditFlags.NEW
+NO_REPEAT = RedditFlags.NO_REPEAT
 
-__all__ = list(_RedditFlags.__members__.keys())
+__all__ = list(RedditFlags.__members__.keys())

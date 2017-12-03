@@ -156,8 +156,10 @@ class CollectParser(argparse.ArgumentParser):
                 args.exit = 1
                 return
 
+        listing = args.collector.reddit_listing(args.reddit_url)
+
         with log_exceptions(args, FileNotFoundError, RuntimeError):
-            return args.collector.reddit(args.reddit_url, flags)
+            return listing.flags_next_recover(flags)
 
     def random(self, args):
         with log_exceptions(args, FileNotFoundError):
