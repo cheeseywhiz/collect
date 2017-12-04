@@ -6,9 +6,9 @@ import subprocess
 import sys
 import time
 
-from . import collect
-from . import config
-from .logger import Logger
+from . import _collect
+from . import _config
+from ._logger import Logger
 from . import __doc__
 
 __all__ = ['CollectParser', 'main']
@@ -16,7 +16,7 @@ __all__ = ['CollectParser', 'main']
 
 def wait_for_connection(n_tries=10, seconds_wait=5, ip_address='8.8.8.8'):
     """Return whether or not a test ping was successful."""
-    count_flag = '-n' if config.WINDOWS else '-c'
+    count_flag = '-n' if _config.WINDOWS else '-c'
 
     for n_try in range(n_tries):
         ping = subprocess.Popen(
@@ -78,9 +78,9 @@ class CollectParser(argparse.ArgumentParser):
             help='Fail if each URL in the listing has been downloaded.')
         reddit.add_argument(
             '--url', '-u', metavar='URL', dest='reddit_url',
-            default=config.REDDIT_URL,
+            default=_config.REDDIT_URL,
             help='Set the URL for the Reddit API listing. '
-                 'Default %s' % config.REDDIT_URL)
+                 'Default %s' % _config.REDDIT_URL)
 
         commands.add_parser(
             'random',
@@ -93,8 +93,8 @@ class CollectParser(argparse.ArgumentParser):
 
         super().add_argument(
             '--dir', metavar='PATH', dest='collector',
-            default=config.DIRECTORY, type=collect.Collect,
-            help='Set the download location. Default %s' % config.DIRECTORY)
+            default=_config.DIRECTORY, type=_collect.Collect,
+            help='Set the download location. Default %s' % _config.DIRECTORY)
         super().add_argument(
             '-v', action='count',
             help='Set verbosity level.')
@@ -141,13 +141,13 @@ class CollectParser(argparse.ArgumentParser):
         return args
 
     def reddit(self, args):
-        flags = collect.NO_REPEAT if args.no_repeat else collect.FAIL
+        flags = _collect.NO_REPEAT if args.no_repeat else _collect.FAIL
 
         if args.all:
-            flags |= collect.ALL
+            flags |= _collect.ALL
 
         if args.new:
-            flags |= collect.NEW
+            flags |= _collect.NEW
 
         if not wait_for_connection():
             Logger.error('Could not connect to the internet')

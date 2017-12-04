@@ -5,11 +5,11 @@ import random
 import praw
 import requests
 
-from . import config
-from .logger import Logger
-from . import path as _path
-from .flags import *
-from .flags import __all__ as _flags_all
+from . import _config
+from ._logger import Logger
+from . import _path
+from ._flags import *
+from ._flags import __all__ as _flags_all
 
 __all__ = ['RedditSubmissionWrapper', 'RedditListingWrapper', 'Collect']
 __all__.extend(_flags_all)
@@ -17,7 +17,7 @@ __all__.extend(_flags_all)
 _reddit = praw.Reddit()
 
 _get = functools.partial(requests.get, headers={
-    'User-Agent': 'collect/%s' % config.VERSION
+    'User-Agent': 'collect/%s' % _config.VERSION
 })
 
 

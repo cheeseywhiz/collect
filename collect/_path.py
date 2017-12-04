@@ -9,7 +9,7 @@ try:
 except ImportError:
     magic_from_file = None
 
-from . import config
+from . import _config
 
 __all__ = ['PathBase', 'PathMeta', 'Path']
 
@@ -86,7 +86,7 @@ class PathBase(metaclass=PathMeta):
         parts = self.__path.split(os.sep)
 
         if os.path.isabs(self.__path):
-            if config.WINDOWS:
+            if _config.WINDOWS:
                 if not parts[0]:
                     parts[0] = os.getenv('HOMEDRIVE')
 
