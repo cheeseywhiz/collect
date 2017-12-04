@@ -1,4 +1,5 @@
 PWD:=$(realpath $(dir $(lastword $(MAKEFILE_LIST))))
+objects:=python -c "__import__('collect')._doc_options()"
 
 INSTALL_FLAGS=
 
@@ -11,7 +12,7 @@ endif
 
 BIN=$(PRE)/bin
 
-all: setup
+all: setup docs
 
 setup: $(PWD)/setup.py
 	python $< install $(INSTALL_FLAGS)
@@ -31,4 +32,7 @@ uninstall:
 clean:
 	rm -rf build *.egg-info dist **/__pycache__
 
-.PHONY: all setup install uninstall clean
+docs:
+	pydocmd simple $(shell $(objects)) > DOC.md
+
+.PHONY: all setup install uninstall clean docs

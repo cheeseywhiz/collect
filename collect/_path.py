@@ -63,7 +63,7 @@ class PathMeta(_ApplyDecorators):
         """Return the current working directory."""
         return self(path=os.getcwd())
 
-    def cast_one_arg(self, func):
+    def _cast_one_arg(self, func):
         """Wrap a function such that the result is passed to a new instance of
         this class."""
         @functools.wraps(func)
@@ -72,7 +72,7 @@ class PathMeta(_ApplyDecorators):
 
         return wrapper
 
-    CastCls = _Decorate(cast_one_arg)
+    _CastCls = _Decorate(_cast_one_arg)
 
 
 class PathBase(metaclass=PathMeta):
@@ -176,17 +176,17 @@ class PathBase(metaclass=PathMeta):
 class Path(PathBase):
     """Provides high level and cross platform file system manipulations on
     paths."""
-    @PathBase.CastCls
+    @PathBase._CastCls
     def join(self, *others):
         """Connect one or more file names onto this path."""
         return os.path.join(self, *others)
 
-    @PathBase.CastCls
+    @PathBase._CastCls
     def realpath(self):
         """Return the absolute path and eliminate symbolic links."""
         return os.path.realpath(self)
 
-    @PathBase.CastCls
+    @PathBase._CastCls
     def relpath(self, start=None):
         """Return the abbreviated form of self relative to start. Default for
         start is the current working directory."""
@@ -195,7 +195,7 @@ class Path(PathBase):
 
         return os.path.relpath(self, start)
 
-    @PathBase.CastCls
+    @PathBase._CastCls
     def abspath(self):
         """Return the absolute path."""
         return os.path.abspath(self)
