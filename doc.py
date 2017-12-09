@@ -1,5 +1,6 @@
 import types as _types
 import builtins as _builtins
+import functools
 
 
 class DocObject:
@@ -33,8 +34,11 @@ class DocObject:
         self.names = names
         self.name = '.'.join(names)
         self.object = object_
-        self.format_data = {
-            'name': self.links,
+
+    @property
+    def format_data(self):
+        return {
+            'name': self.all_links,
             'type': self.type,
             'doc': self.doc,
             'header': '#' * self.header_level,
@@ -43,48 +47,51 @@ class DocObject:
     @property
     def doc(self):
         doc = getattr(self.object, '__doc__', '')
-
-        if doc is None:
-            doc = ''
-
-        return doc
+        return '' if doc is None else doc
 
     @property
     def type(self):
-        if self._type is not None:
-            return self._type
+        return self.__class__.__name__ if self._type is None else self._type
 
-        return self.__class__.__name__
+    @type.setter
+    def type(self, value):
+        self._type = value
 
     @property
-    def links(self):
+    def all_links(self):
         return '.'.join(
             '[%s](#%s)' % (name, ''.join(self.names[:i]).lower())
             for i, name in enumerate(self.names, 1)
         )
 
+    @property
+    def link(self):
+        return '[%s](#%s)' % (self.name, ''.join(self.names).lower())
+
     @classmethod
     def child_type(cls, object_):
         """Return the corresponding documentation helper type of the given
         object."""
-        if isinstance(object_, (
-            _types.FunctionType, _types.BuiltinFunctionType
-        )):
+        is_inst = functools.partial(lambda o, *t: isinstance(o, (t)), object_)
+        if is_inst(_types.FunctionType, _types.BuiltinFunctionType):
             return Function
-        elif isinstance(object_, _types.ModuleType):
+        elif is_inst(_types.ModuleType):
             return Module
-        elif isinstance(object_, type):
+        elif is_inst(type):
             return (
                 Exception
                 if issubclass(object_, _builtins.Exception)
                 else Class
             )
-        elif isinstance(object_, staticmethod):
+        elif is_inst(staticmethod):
             return StaticMethod
-        elif isinstance(object_, classmethod):
+        elif is_inst(classmethod):
             return ClassMethod
         else:
             return DocObject
+
+    def new_child(self, name, object_):
+        return self.child_type(object_)(object_, self.names + [name])
 
     def __iter__(self):
         yield self
@@ -93,7 +100,7 @@ class DocObject:
             child_type = self.child_type(child_obj)
 
             if child_type is not DocObject:
-                yield from child_type(child_obj, self.names + [name])
+                yield from self.new_child(name, child_obj)
 
     def __repr__(self):
         cls = self.__class__
@@ -116,25 +123,26 @@ class Function(DocObject):
 class Method(Function):
     """Method function documentation helper"""
 
+    def __init__(self, object_, names=None, parent=None):
+        super().__init__(object_, names=names)
+        self.parent = parent
+        self.type += ' of class %s' % self.parent.link
+
 
 class StaticMethod(Method):
     _type = 'Static Method'
 
-    def __new__(cls, static_method, names=None):
-        return super().__new__(cls, static_method.__func__, names=names)
+    def __new__(cls, static_method, names=None, parent=None):
+        return super().__new__(
+            cls, static_method.__func__, names=names, parent=parent
+        )
 
-    def __init__(self, static_method, names=None):
-        super().__init__(static_method.__func__, names=names)
+    def __init__(self, static_method, names=None, parent=None):
+        super().__init__(static_method.__func__, names=names, parent=parent)
 
 
-class ClassMethod(Method):
+class ClassMethod(StaticMethod):
     _type = 'Class Method'
-
-    def __new__(cls, class_method, names=None):
-        return super().__new__(cls, class_method.__func__, names=names)
-
-    def __init__(self, class_method, names=None):
-        super().__init__(class_method.__func__, names=names)
 
 
 class Module(DocObject):
@@ -176,6 +184,15 @@ class Class(DocObject):
             return Method
         else:
             return child_type
+
+    def new_child(self, name, object_):
+        args = object_, self.names + [name]
+        child_type = self.child_type(object_)
+
+        if issubclass(child_type, Method):
+            return child_type(*args, self)
+        else:
+            return child_type(*args)
 
 
 class Exception(Class):
