@@ -59,8 +59,8 @@ class RedditSubmissionWrapper:
         self.path = parent_path.url_fname(self.url)
 
     def download(self):
-        """Save a picture to this path. Raises ValueError if the HTTP response
-        indicates that we did not receive an image."""
+        """Save a picture to this path. Raises `ValueError` if the HTTP
+        response indicates that we did not receive an image."""
         res = _get_image(self.url)
 
         with open(self.path, 'wb') as file:
@@ -107,7 +107,7 @@ class RedditListingWrapper:
         return post
 
     def next_download(self):
-        """next(self) while downloading the submission's image."""
+        """`next(self)` while downloading the submission's image."""
         post = next(self)
 
         if post.path in self.existing_paths:
@@ -121,7 +121,7 @@ class RedditListingWrapper:
             return post
 
     def next_no_repeat(self):
-        """next(self) while skipping submissions that have already been
+        """`next(self)` while skipping submissions that have already been
         collected."""
         post = next(self)
 
@@ -131,7 +131,7 @@ class RedditListingWrapper:
             return post
 
     def next_no_repeat_download(self):
-        """self.next_no_repeat() while downloading the submisson's image."""
+        """`self.next_no_repeat()` while downloading the submisson's image."""
         post = self.next_download()
 
         if post.path in self.existing_paths:
@@ -196,12 +196,12 @@ class Collect(_path.Path):
     """Perform image collection operations on a path."""
 
     def reddit_listing(self, api_url):
-        """Helper for new RedditListingWrapper at this path."""
+        """Helper for new `RedditListingWrapper` at this path."""
         return RedditListingWrapper(self, api_url)
 
     def random(self):
-        """Return a random file within this directory. Raises FileNotFoundError
-        if no suitable file was found."""
+        """Return a random file within this directory. Raises
+        `FileNotFoundError` if no suitable file was found."""
         try:
             return next(
                 path

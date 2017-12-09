@@ -1,5 +1,4 @@
 PWD:=$(realpath $(dir $(lastword $(MAKEFILE_LIST))))
-objects:=python -c "__import__('collect')._doc_options()"
 
 INSTALL_FLAGS=
 

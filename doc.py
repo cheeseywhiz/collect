@@ -12,12 +12,13 @@ class DocObject:
 
 {doc}'''
     header_level = 1
+    _type = None
 
     def __new__(cls, object_, names=None, parent=None):
         if cls is DocObject:
             cls = cls.child_type(object_)
 
-        return super(DocObject, cls).__new__(cls)
+        return super().__new__(cls)
 
     def __init__(self, object_, names=None):
         if names is None:
@@ -34,24 +35,38 @@ class DocObject:
         self.object = object_
         self.format_data = {
             'name': self.links,
-            'type': self.__class__.__name__,
+            'type': self.type,
             'doc': self.doc,
             'header': '#' * self.header_level,
         }
 
     @property
     def doc(self):
-        doc = getattr(self.object, '__doc__', None)
+        doc = getattr(self.object, '__doc__', '')
 
         if doc is None:
             doc = ''
-        elif doc:
-            doc += '\n' * 2
 
         return doc
 
+    @property
+    def type(self):
+        if self._type is not None:
+            return self._type
+
+        return self.__class__.__name__
+
+    @property
+    def links(self):
+        return '.'.join(
+            '[%s](#%s)' % (name, ''.join(self.names[:i]).lower())
+            for i, name in enumerate(self.names, 1)
+        )
+
     @classmethod
     def child_type(cls, object_):
+        """Return the corresponding documentation helper type of the given
+        object."""
         if isinstance(object_, (
             _types.FunctionType, _types.BuiltinFunctionType
         )):
@@ -64,15 +79,12 @@ class DocObject:
                 if issubclass(object_, _builtins.Exception)
                 else Class
             )
+        elif isinstance(object_, staticmethod):
+            return StaticMethod
+        elif isinstance(object_, classmethod):
+            return ClassMethod
         else:
             return DocObject
-
-    @property
-    def links(self):
-        return '.'.join(
-            '[%s](#%s)' % (name, ''.join(self.names[:i]).lower())
-            for i, name in enumerate(self.names, 1)
-        )
 
     def __iter__(self):
         yield self
@@ -90,10 +102,10 @@ class DocObject:
         return '%s.%s(%r, names=%r)' % (module, name, self.object, self.names)
 
     def __str__(self):
-        return ''.join(
+        return '\n\n'.join(
             self.template.format(**obj.format_data)
             for obj in self
-        ).strip()
+        )
 
 
 class Function(DocObject):
@@ -101,9 +113,28 @@ class Function(DocObject):
     header_level = 3
 
 
-class Method(DocObject):
+class Method(Function):
     """Method function documentation helper"""
-    header_level = 3
+
+
+class StaticMethod(Method):
+    _type = 'Static Method'
+
+    def __new__(cls, static_method, names=None):
+        return super().__new__(cls, static_method.__func__, names=names)
+
+    def __init__(self, static_method, names=None):
+        super().__init__(static_method.__func__, names=names)
+
+
+class ClassMethod(Method):
+    _type = 'Class Method'
+
+    def __new__(cls, class_method, names=None):
+        return super().__new__(cls, class_method.__func__, names=names)
+
+    def __init__(self, class_method, names=None):
+        super().__init__(class_method.__func__, names=names)
 
 
 class Module(DocObject):

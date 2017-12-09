@@ -189,7 +189,7 @@ class Path(PathBase):
     @PathBase._CastCls
     def relpath(self, start=None):
         """Return the abbreviated form of self relative to start. Default for
-        start is the current working directory."""
+        `start` is the current working directory."""
         if start is None:
             start = self.__class__.cwd()
 
@@ -201,11 +201,11 @@ class Path(PathBase):
         return os.path.abspath(self)
 
     def __truediv__(self, other):
-        """Perform self / other to join paths."""
+        """Perform `self / other` to join paths."""
         return self.join(other)
 
     def url_fname(self, url):
-        """Join the filename part of a url to this path."""
+        """Join the filename part of a url to `self`."""
         return self / super().url_fname(url)
 
     def open(self, mode='r', buffering=-1, encoding=None, errors=None,
@@ -216,48 +216,47 @@ class Path(PathBase):
             errors=errors, newline=newline, closefd=closefd, opener=opener)
 
     def exists(self):
-        """Check if the path exists."""
+        """Check if `self` exists on the filesystem."""
         return os.path.exists(self)
 
     def is_dir(self):
-        """Check if the path is a directory."""
+        """Check if `self` is a directory."""
         return os.path.isdir(self)
 
     def is_file(self):
-        """Check if the path is a file."""
+        """Check `self` is a file on the filesystem."""
         return os.path.isfile(self)
 
     def is_link(self):
-        """Check if the path is a symbolic link."""
+        """Check if `self` is a symbolic link."""
         return os.path.islink(self)
 
     def is_abs(self):
-        """Check if the path is absolute."""
+        """Check if `self` is an absolute path."""
         return os.path.isabs(self)
 
     def __contains__(self, other):
-        """Check recursively if other is inside self (a directory)."""
+        """Check recursively if `other` is inside `self` (a directory)."""
         self = self.abspath()
         other = Path(other).abspath()
         return self._first_diff_part(other) < 0
 
     def contains_toplevel(self, other):
-        """Check if other is at the top level of self (a directory)."""
+        """Check if `other` is at the top level of `self` (a directory)."""
         self = self.abspath()
         other = other.abspath()
         return other in self and len(other.parts) - len(self.parts) == 1
 
     def is_toplevel(self, other):
-        """Check if self is in the top level of other (a directory)."""
+        """Check if `self` is in the top level of `other` (a directory)."""
         return Path(other).contains_toplevel(self)
 
     def is_in_dir(self, other):
-        """return self in other
-        Check if self is inside other (a directory)."""
+        """Check if `self` is inside `other` (a directory)."""
         return self in Path(other)
 
     def rmtree(self, ignore_errors=False, onerror=None):
-        """Delete every file inside a directory file."""
+        """Delete every file inside `self` (a directory)."""
         shutil.rmtree(self, ignore_errors=ignore_errors, onerror=onerror)
 
     def remove(self):
@@ -270,12 +269,12 @@ class Path(PathBase):
             raise ValueError('%r is not a file or directory' % self)
 
     def remove_contents(self):
-        """Remove each file within a directory."""
+        """Remove each file within `self` (a directory)."""
         for file in self:
             file.remove()
 
     def mkdir(self, mode=0o777, *, exist_ok=False, dir_fd=None):
-        """Make a directory exist under this path."""
+        """Make a directory exist under `self`."""
         try:
             os.mkdir(self, mode=mode, dir_fd=dir_fd)
         except FileExistsError:
@@ -289,7 +288,7 @@ class Path(PathBase):
 
     @property
     def type(self):
-        """Return the MIME type of this file."""
+        """Return the MIME type of `self`."""
         if self.is_dir():
             # mimic file(1) behavior
             return 'inode/directory'
@@ -304,7 +303,7 @@ class Path(PathBase):
 
     @property
     def tree(self):
-        """Generate all of the paths in this directory path."""
+        """Generate the path tree for `self` (a directory)."""
         yield self
 
         for item in self:
@@ -317,5 +316,5 @@ class Path(PathBase):
                 yield item
 
     def __iter__(self):
-        """Iterate over the paths within this path."""
+        """Return the toplevel path iterator for `self` (a directory)."""
         yield from map(self.join, os.listdir(self))
