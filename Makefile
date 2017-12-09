@@ -37,7 +37,7 @@ $(PWD)/DOC.md:
 
 docs: $(PWD)/DOC.md
 
-clean_docs:
+cleandocs:
 	rm -f $(PWD)/DOC.md
 
-.PHONY: all setup install uninstall clean docs clean_docs
+.PHONY: all setup install uninstall clean docs cleandocs
