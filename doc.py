@@ -83,8 +83,8 @@ class DocObject:
         parts = []
 
         for i, name in enumerate(names, 1):
-            names_so_far = '.'.join(names[:i])
-            parts.append('[%s](#%s)' % (name, names_so_far))
+            link = ''.join(names[:i]).lower()
+            parts.append('[%s](#%s)' % (name, link))
 
         return '.'.join(parts)
 

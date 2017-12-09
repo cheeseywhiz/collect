@@ -32,7 +32,12 @@ uninstall:
 clean:
 	rm -rf build *.egg-info dist **/__pycache__
 
-docs:
-	python doc.py collect > DOC.md
+$(PWD)/DOC.md:
+	python $(PWD)/doc.py collect > $@
 
-.PHONY: all setup install uninstall clean docs
+docs: $(PWD)/DOC.md
+
+clean_docs:
+	rm -f $(PWD)/DOC.md
+
+.PHONY: all setup install uninstall clean docs clean_docs
