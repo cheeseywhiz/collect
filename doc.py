@@ -13,16 +13,16 @@ class DocObject:
 {doc}'''
     header_level = 1
 
-    def __new__(cls, object_, names=None):
+    def __new__(cls, object_, names=None, parent=None):
         if cls is DocObject:
-            obj_class = DocObject.obj_class(None, object_)
+            obj_class = DocObject.obj_class(parent, object_)
 
             if obj_class is not None:
-                return obj_class(object_, names=names)
+                return object.__new__(obj_class)
 
         return object.__new__(cls)
 
-    def __init__(self, object_, names=None):
+    def __init__(self, object_, names=None, **kwargs):
         if names is None:
             names = getattr(object_, '__name__', None)
             if names is None:
@@ -92,7 +92,7 @@ class DocObject:
         yield self
 
         for name, child_obj in self.members.items():
-            child_doc = DocObject(child_obj, self.names + [name])
+            child_doc = DocObject(child_obj, self.names + [name], parent=self)
 
             if type(child_doc) is DocObject:
                 continue
@@ -125,7 +125,7 @@ class Method(DocObject):
 class Module(DocObject):
     header_level = 1
 
-    def __init__(self, module, names=None):
+    def __init__(self, module, names=None, **kwargs):
         super().__init__(module, names=names)
         all_ = getattr(module, '__all__', None)
 
@@ -146,7 +146,7 @@ class Class(DocObject):
     """Class doc helper"""
     header_level = 2
 
-    def __init__(self, class_, names=None):
+    def __init__(self, class_, names=None, **kwargs):
         super().__init__(class_, names=names)
         self.members = {
             name: obj

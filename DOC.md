@@ -13,14 +13,14 @@ Wrapper for Reddit submission objects to facilitate logging and URL
 
 ### [collect](#collect).[RedditSubmissionWrapper](#collectredditsubmissionwrapper).[download](#collectredditsubmissionwrapperdownload)
 
-*Function*
+*Method*
 
 Save a picture to this path. Raises ValueError if the HTTP response
         indicates that we did not receive an image.
 
 ### [collect](#collect).[RedditSubmissionWrapper](#collectredditsubmissionwrapper).[log](#collectredditsubmissionwrapperlog)
 
-*Function*
+*Method*
 
 Log the submission's title, comment URL, and link URL.
 
@@ -33,33 +33,33 @@ Wrapper for Reddit listing generators to facilitate image downloading
 
 ### [collect](#collect).[RedditListingWrapper](#collectredditlistingwrapper).[next_download](#collectredditlistingwrappernext_download)
 
-*Function*
+*Method*
 
 next(self) while downloading the submission's image.
 
 ### [collect](#collect).[RedditListingWrapper](#collectredditlistingwrapper).[next_no_repeat](#collectredditlistingwrappernext_no_repeat)
 
-*Function*
+*Method*
 
 next(self) while skipping submissions that have already been
         collected.
 
 ### [collect](#collect).[RedditListingWrapper](#collectredditlistingwrapper).[next_no_repeat_download](#collectredditlistingwrappernext_no_repeat_download)
 
-*Function*
+*Method*
 
 self.next_no_repeat() while downloading the submisson's image.
 
 ### [collect](#collect).[RedditListingWrapper](#collectredditlistingwrapper).[flags_next_download](#collectredditlistingwrapperflags_next_download)
 
-*Function*
+*Method*
 
 Download the next submission's image according to the specified
         flags.
 
 ### [collect](#collect).[RedditListingWrapper](#collectredditlistingwrapper).[flags_next_recover](#collectredditlistingwrapperflags_next_recover)
 
-*Function*
+*Method*
 
 Download the next submission's image but handle collection errors
         according to the flags.
@@ -72,13 +72,13 @@ Perform image collection operations on a path.
 
 ### [collect](#collect).[Collect](#collectcollect).[reddit_listing](#collectcollectreddit_listing)
 
-*Function*
+*Method*
 
 Helper for new RedditListingWrapper at this path.
 
 ### [collect](#collect).[Collect](#collectcollect).[random](#collectcollectrandom)
 
-*Function*
+*Method*
 
 Return a random file within this directory. Raises FileNotFoundError
         if no suitable file was found.
@@ -97,13 +97,13 @@ Provides the numerous class methods for all Path types.
 
 ### [collect](#collect).[PathMeta](#collectpathmeta).[home](#collectpathmetahome)
 
-*Function*
+*Method*
 
 Return the user's home directory.
 
 ### [collect](#collect).[PathMeta](#collectpathmeta).[cwd](#collectpathmetacwd)
 
-*Function*
+*Method*
 
 Return the current working directory.
 
@@ -116,110 +116,110 @@ Provides high level and cross platform file system manipulations on
 
 ### [collect](#collect).[Path](#collectpath).[join](#collectpathjoin)
 
-*Function*
+*Method*
 
 Connect one or more file names onto this path.
 
 ### [collect](#collect).[Path](#collectpath).[realpath](#collectpathrealpath)
 
-*Function*
+*Method*
 
 Return the absolute path and eliminate symbolic links.
 
 ### [collect](#collect).[Path](#collectpath).[relpath](#collectpathrelpath)
 
-*Function*
+*Method*
 
 Return the abbreviated form of self relative to start. Default for
         start is the current working directory.
 
 ### [collect](#collect).[Path](#collectpath).[abspath](#collectpathabspath)
 
-*Function*
+*Method*
 
 Return the absolute path.
 
 ### [collect](#collect).[Path](#collectpath).[url_fname](#collectpathurl_fname)
 
-*Function*
+*Method*
 
 Join the filename part of a url to this path.
 
 ### [collect](#collect).[Path](#collectpath).[open](#collectpathopen)
 
-*Function*
+*Method*
 
 Open the file for changing.
 
 ### [collect](#collect).[Path](#collectpath).[exists](#collectpathexists)
 
-*Function*
+*Method*
 
 Check if the path exists.
 
 ### [collect](#collect).[Path](#collectpath).[is_dir](#collectpathis_dir)
 
-*Function*
+*Method*
 
 Check if the path is a directory.
 
 ### [collect](#collect).[Path](#collectpath).[is_file](#collectpathis_file)
 
-*Function*
+*Method*
 
 Check if the path is a file.
 
 ### [collect](#collect).[Path](#collectpath).[is_link](#collectpathis_link)
 
-*Function*
+*Method*
 
 Check if the path is a symbolic link.
 
 ### [collect](#collect).[Path](#collectpath).[is_abs](#collectpathis_abs)
 
-*Function*
+*Method*
 
 Check if the path is absolute.
 
 ### [collect](#collect).[Path](#collectpath).[contains_toplevel](#collectpathcontains_toplevel)
 
-*Function*
+*Method*
 
 Check if other is at the top level of self (a directory).
 
 ### [collect](#collect).[Path](#collectpath).[is_toplevel](#collectpathis_toplevel)
 
-*Function*
+*Method*
 
 Check if self is in the top level of other (a directory).
 
 ### [collect](#collect).[Path](#collectpath).[is_in_dir](#collectpathis_in_dir)
 
-*Function*
+*Method*
 
 return self in other
         Check if self is inside other (a directory).
 
 ### [collect](#collect).[Path](#collectpath).[rmtree](#collectpathrmtree)
 
-*Function*
+*Method*
 
 Delete every file inside a directory file.
 
 ### [collect](#collect).[Path](#collectpath).[remove](#collectpathremove)
 
-*Function*
+*Method*
 
 Remove a file or a directory (if empty).
 
 ### [collect](#collect).[Path](#collectpath).[remove_contents](#collectpathremove_contents)
 
-*Function*
+*Method*
 
 Remove each file within a directory.
 
 ### [collect](#collect).[Path](#collectpath).[mkdir](#collectpathmkdir)
 
-*Function*
+*Method*
 
 Make a directory exist under this path.
