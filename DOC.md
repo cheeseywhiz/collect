@@ -1,244 +1,225 @@
-<h1 id="collect.RedditSubmissionWrapper">RedditSubmissionWrapper</h1>
+# [collect](#collect)
 
-```python
-RedditSubmissionWrapper(self, parent_path, data)
-```
+*Module*
+
+Automate downloading an image using the Reddit API.
+
+## [collect](#collect).[RedditSubmissionWrapper](#collect.RedditSubmissionWrapper)
+
+*Class*
+
 Wrapper for Reddit submission objects to facilitate logging and URL
     downloading.
-<h2 id="collect.RedditSubmissionWrapper.download">download</h2>
 
-```python
-RedditSubmissionWrapper.download(self)
-```
+### [collect](#collect).[RedditSubmissionWrapper](#collect.RedditSubmissionWrapper).[download](#collect.RedditSubmissionWrapper.download)
+
+*Function*
+
 Save a picture to this path. Raises ValueError if the HTTP response
         indicates that we did not receive an image.
-<h2 id="collect.RedditSubmissionWrapper.log">log</h2>
 
-```python
-RedditSubmissionWrapper.log(self)
-```
+### [collect](#collect).[RedditSubmissionWrapper](#collect.RedditSubmissionWrapper).[log](#collect.RedditSubmissionWrapper.log)
+
+*Function*
+
 Log the submission's title, comment URL, and link URL.
-<h1 id="collect.RedditListingWrapper">RedditListingWrapper</h1>
 
-```python
-RedditListingWrapper(self, path, api_url)
-```
+## [collect](#collect).[RedditListingWrapper](#collect.RedditListingWrapper)
+
+*Class*
+
 Wrapper for Reddit listing generators to facilitate image downloading
     and handling certain behaviors.
-<h2 id="collect.RedditListingWrapper.next_download">next_download</h2>
 
-```python
-RedditListingWrapper.next_download(self)
-```
+### [collect](#collect).[RedditListingWrapper](#collect.RedditListingWrapper).[next_download](#collect.RedditListingWrapper.next_download)
+
+*Function*
+
 next(self) while downloading the submission's image.
-<h2 id="collect.RedditListingWrapper.next_no_repeat">next_no_repeat</h2>
 
-```python
-RedditListingWrapper.next_no_repeat(self)
-```
+### [collect](#collect).[RedditListingWrapper](#collect.RedditListingWrapper).[next_no_repeat](#collect.RedditListingWrapper.next_no_repeat)
+
+*Function*
+
 next(self) while skipping submissions that have already been
         collected.
-<h2 id="collect.RedditListingWrapper.next_no_repeat_download">next_no_repeat_download</h2>
 
-```python
-RedditListingWrapper.next_no_repeat_download(self)
-```
+### [collect](#collect).[RedditListingWrapper](#collect.RedditListingWrapper).[next_no_repeat_download](#collect.RedditListingWrapper.next_no_repeat_download)
+
+*Function*
+
 self.next_no_repeat() while downloading the submisson's image.
-<h2 id="collect.RedditListingWrapper.flags_next_download">flags_next_download</h2>
 
-```python
-RedditListingWrapper.flags_next_download(self, flags)
-```
+### [collect](#collect).[RedditListingWrapper](#collect.RedditListingWrapper).[flags_next_download](#collect.RedditListingWrapper.flags_next_download)
+
+*Function*
+
 Download the next submission's image according to the specified
         flags.
-<h2 id="collect.RedditListingWrapper.flags_next_recover">flags_next_recover</h2>
 
-```python
-RedditListingWrapper.flags_next_recover(self, flags)
-```
+### [collect](#collect).[RedditListingWrapper](#collect.RedditListingWrapper).[flags_next_recover](#collect.RedditListingWrapper.flags_next_recover)
+
+*Function*
+
 Download the next submission's image but handle collection errors
         according to the flags.
-<h1 id="collect.Collect">Collect</h1>
 
-```python
-Collect(self, path=None)
-```
+## [collect](#collect).[Collect](#collect.Collect)
+
+*Class*
+
 Perform image collection operations on a path.
-<h2 id="collect.Collect.reddit_listing">reddit_listing</h2>
 
-```python
-Collect.reddit_listing(self, api_url)
-```
+### [collect](#collect).[Collect](#collect.Collect).[reddit_listing](#collect.Collect.reddit_listing)
+
+*Function*
+
 Helper for new RedditListingWrapper at this path.
-<h2 id="collect.Collect.random">random</h2>
 
-```python
-Collect.random(self)
-```
+### [collect](#collect).[Collect](#collect.Collect).[random](#collect.Collect.random)
+
+*Function*
+
 Return a random file within this directory. Raises FileNotFoundError
         if no suitable file was found.
-<h1 id="collect.PathBase">PathBase</h1>
 
-```python
-PathBase(self, path=None)
-```
+## [collect](#collect).[PathBase](#collect.PathBase)
+
+*Class*
+
 Provides general functionality for all Path types.
-<h2 id="collect.PathBase.parts">parts</h2>
 
-Split the path by the OS path slash separator.
-<h2 id="collect.PathBase.basename">basename</h2>
+## [collect](#collect).[PathMeta](#collect.PathMeta)
 
-The final element in the path.
-<h2 id="collect.PathBase.split">split</h2>
+*Class*
 
-Split the path's basename by filename and extension.
-<h2 id="collect.PathBase.url_fname">url_fname</h2>
-
-```python
-PathBase.url_fname(url)
-```
-Return the filename part of a url.
-<h1 id="collect.PathMeta">PathMeta</h1>
-
-```python
-PathMeta(self, /, *args, **kwargs)
-```
 Provides the numerous class methods for all Path types.
-<h2 id="collect.PathMeta.home">home</h2>
 
-```python
-PathMeta.home(self)
-```
+### [collect](#collect).[PathMeta](#collect.PathMeta).[home](#collect.PathMeta.home)
+
+*Function*
+
 Return the user's home directory.
-<h2 id="collect.PathMeta.cwd">cwd</h2>
 
-```python
-PathMeta.cwd(self)
-```
+### [collect](#collect).[PathMeta](#collect.PathMeta).[cwd](#collect.PathMeta.cwd)
+
+*Function*
+
 Return the current working directory.
-<h1 id="collect.Path">Path</h1>
 
-```python
-Path(self, path=None)
-```
+## [collect](#collect).[Path](#collect.Path)
+
+*Class*
+
 Provides high level and cross platform file system manipulations on
     paths.
-<h2 id="collect.Path.join">join</h2>
 
-```python
-Path.join(self, *others)
-```
+### [collect](#collect).[Path](#collect.Path).[join](#collect.Path.join)
+
+*Function*
+
 Connect one or more file names onto this path.
-<h2 id="collect.Path.realpath">realpath</h2>
 
-```python
-Path.realpath(self)
-```
+### [collect](#collect).[Path](#collect.Path).[realpath](#collect.Path.realpath)
+
+*Function*
+
 Return the absolute path and eliminate symbolic links.
-<h2 id="collect.Path.relpath">relpath</h2>
 
-```python
-Path.relpath(self, start=None)
-```
+### [collect](#collect).[Path](#collect.Path).[relpath](#collect.Path.relpath)
+
+*Function*
+
 Return the abbreviated form of self relative to start. Default for
         start is the current working directory.
-<h2 id="collect.Path.abspath">abspath</h2>
 
-```python
-Path.abspath(self)
-```
+### [collect](#collect).[Path](#collect.Path).[abspath](#collect.Path.abspath)
+
+*Function*
+
 Return the absolute path.
-<h2 id="collect.Path.url_fname">url_fname</h2>
 
-```python
-Path.url_fname(self, url)
-```
+### [collect](#collect).[Path](#collect.Path).[url_fname](#collect.Path.url_fname)
+
+*Function*
+
 Join the filename part of a url to this path.
-<h2 id="collect.Path.open">open</h2>
 
-```python
-Path.open(self, mode='r', buffering=-1, encoding=None, errors=None, newline=None, closefd=True, opener=None)
-```
+### [collect](#collect).[Path](#collect.Path).[open](#collect.Path.open)
+
+*Function*
+
 Open the file for changing.
-<h2 id="collect.Path.exists">exists</h2>
 
-```python
-Path.exists(self)
-```
+### [collect](#collect).[Path](#collect.Path).[exists](#collect.Path.exists)
+
+*Function*
+
 Check if the path exists.
-<h2 id="collect.Path.is_dir">is_dir</h2>
 
-```python
-Path.is_dir(self)
-```
+### [collect](#collect).[Path](#collect.Path).[is_dir](#collect.Path.is_dir)
+
+*Function*
+
 Check if the path is a directory.
-<h2 id="collect.Path.is_file">is_file</h2>
 
-```python
-Path.is_file(self)
-```
+### [collect](#collect).[Path](#collect.Path).[is_file](#collect.Path.is_file)
+
+*Function*
+
 Check if the path is a file.
-<h2 id="collect.Path.is_link">is_link</h2>
 
-```python
-Path.is_link(self)
-```
+### [collect](#collect).[Path](#collect.Path).[is_link](#collect.Path.is_link)
+
+*Function*
+
 Check if the path is a symbolic link.
-<h2 id="collect.Path.is_abs">is_abs</h2>
 
-```python
-Path.is_abs(self)
-```
+### [collect](#collect).[Path](#collect.Path).[is_abs](#collect.Path.is_abs)
+
+*Function*
+
 Check if the path is absolute.
-<h2 id="collect.Path.contains_toplevel">contains_toplevel</h2>
 
-```python
-Path.contains_toplevel(self, other)
-```
+### [collect](#collect).[Path](#collect.Path).[contains_toplevel](#collect.Path.contains_toplevel)
+
+*Function*
+
 Check if other is at the top level of self (a directory).
-<h2 id="collect.Path.is_toplevel">is_toplevel</h2>
 
-```python
-Path.is_toplevel(self, other)
-```
+### [collect](#collect).[Path](#collect.Path).[is_toplevel](#collect.Path.is_toplevel)
+
+*Function*
+
 Check if self is in the top level of other (a directory).
-<h2 id="collect.Path.is_in_dir">is_in_dir</h2>
 
-```python
-Path.is_in_dir(self, other)
-```
+### [collect](#collect).[Path](#collect.Path).[is_in_dir](#collect.Path.is_in_dir)
+
+*Function*
+
 return self in other
         Check if self is inside other (a directory).
-<h2 id="collect.Path.rmtree">rmtree</h2>
 
-```python
-Path.rmtree(self, ignore_errors=False, onerror=None)
-```
+### [collect](#collect).[Path](#collect.Path).[rmtree](#collect.Path.rmtree)
+
+*Function*
+
 Delete every file inside a directory file.
-<h2 id="collect.Path.remove">remove</h2>
 
-```python
-Path.remove(self)
-```
+### [collect](#collect).[Path](#collect.Path).[remove](#collect.Path.remove)
+
+*Function*
+
 Remove a file or a directory (if empty).
-<h2 id="collect.Path.remove_contents">remove_contents</h2>
 
-```python
-Path.remove_contents(self)
-```
+### [collect](#collect).[Path](#collect.Path).[remove_contents](#collect.Path.remove_contents)
+
+*Function*
+
 Remove each file within a directory.
-<h2 id="collect.Path.mkdir">mkdir</h2>
 
-```python
-Path.mkdir(self, mode=511, *, exist_ok=False, dir_fd=None)
-```
+### [collect](#collect).[Path](#collect.Path).[mkdir](#collect.Path.mkdir)
+
+*Function*
+
 Make a directory exist under this path.
-<h2 id="collect.Path.parent">parent</h2>
-
-Move up one directory.
-<h2 id="collect.Path.type">type</h2>
-
-Return the MIME type of this file.
-<h2 id="collect.Path.tree">tree</h2>
-
-Generate all of the paths in this directory path.

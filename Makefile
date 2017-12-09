@@ -33,6 +33,6 @@ clean:
 	rm -rf build *.egg-info dist **/__pycache__
 
 docs:
-	pydocmd simple $(shell $(objects)) > DOC.md
+	python doc.py collect > DOC.md
 
 .PHONY: all setup install uninstall clean docs
