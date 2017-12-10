@@ -140,7 +140,7 @@ class Method(Function):
     @property
     def doc_data(self):
         return {
-            'self': '[self](#%s)' % ''.join(self.parent.names).lower(),
+            'self': '[`self`](#%s)' % ''.join(self.parent.names).lower(),
         }
 
     @property
