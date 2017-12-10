@@ -40,20 +40,16 @@ def trim_tabs(doc_string):
 class DocObject:
     """Python object to markdown helper. The initial name is inferred if not
     provided."""
-    template_lines = _collections.OrderedDict(
-        header='{header} {name}',
-        type='*{type}*',
-    )
     header_level = 1
     _type = None
 
-    def __new__(cls, object_, names=None, parent=None):
+    def __new__(cls, object_, *args, names=None, **kwargs):
         if cls is DocObject:
             cls = cls.child_type(object_)
 
         return super().__new__(cls)
 
-    def __init__(self, object_, names=None):
+    def __init__(self, object_, *args, names=None, **kwargs):
         if names is None:
             names = getattr(object_, '__name__', None)
             if names is None:
@@ -65,6 +61,13 @@ class DocObject:
         self.members = {}
         self.object = object_
         self.names = names
+
+    @property
+    def template_lines(self):
+        return _collections.OrderedDict([
+            ('header', '{header} {name}'),
+            ('type', '*{type}*'),
+        ])
 
     @property
     def names(self):
@@ -143,7 +146,7 @@ class DocObject:
     def new_child(self, object_, name):
         """Return a new doc helper object that is a child of {self} within the
         hierarchy."""
-        return DocObject(object_, self.names + [name])
+        return DocObject(object_, names=self.names + [name])
 
     def __iter__(self):
         yield self
@@ -162,25 +165,48 @@ class DocObject:
 
     def __str__(self):
         return '\n\n'.join(
-            '\n\n'.join(
-                line.format(**obj.format_data)
-                for line in obj.template_lines.values()
-            )
+            line.format(**self.format_data)
+            for line in self.template_lines.values()
+        )
+
+    def str_all(self):
+        return '\n\n'.join(
+            str(obj)
             for obj in self
         )
 
 
-class Function(DocObject):
-    header_level = 3
-    template_lines = DocObject.template_lines.copy()
-    template_lines.update(signature='```python\n{signature}\n```')
+class ClassMemberMix(DocObject):
+    def __init__(self, *args, parent=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.parent = parent
+        self.type += ' of class %s' % self.parent.link
 
-    def __init__(self, function, names=None):
-        super().__init__(function, names=names)
+    @property
+    def doc_data(self):
+        data = super().doc_data
+        data.update(self='[`self`](%s)' % self.parent.header_link)
+        return data
+
+
+class DocStringMix(DocObject):
+    @property
+    def template_lines(self):
+        lines = super().template_lines
 
         if super().doc:
-            self.template_lines = self.template_lines.copy()
-            self.template_lines.update(doc='{doc}')
+            lines = lines.copy()
+            lines.update(doc='{doc}')
+
+        return lines
+
+
+class CallableMix(DocObject):
+    @property
+    def template_lines(self):
+        lines = super().template_lines.copy()
+        lines.update(signature='```python\n{signature}\n```')
+        return lines
 
     @property
     def signature(self):
@@ -199,69 +225,63 @@ class Function(DocObject):
         return data
 
 
-class Method(Function):
-    def __init__(self, object_, names=None, parent=None):
-        self.parent = parent
-        super().__init__(object_, names=names)
-
-        if self.parent is not None:
-            self.type += ' of class %s' % self.parent.link
-
-    @property
-    def doc_data(self):
-        data = super().doc_data
-        data.update(self='[`self`](%s)' % self.parent.header_link)
-        return data
+class DocCallable(DocStringMix, CallableMix):
+    # because order is significant
+    pass
 
 
-class StaticMethod(Method):
+class Function(DocCallable):
+    header_level = 3
+
+
+class Method(ClassMemberMix, Function):
+    pass
+
+
+class InitDunderFunc(DocObject):
+    def __new__(cls, object_, *args, **kwargs):
+        return super().__new__(cls, object_.__func__, *args, **kwargs)
+
+    def __init__(self, object_, *args, **kwargs):
+        super().__init__(object_.__func__, *args, **kwargs)
+
+
+class StaticMethod(Method, InitDunderFunc):
     _type = 'Static Method'
 
-    def __new__(cls, static_method, names=None, parent=None):
-        return super().__new__(
-            cls, static_method.__func__, names=names, parent=parent
-        )
 
-    def __init__(self, static_method, names=None, parent=None):
-        super().__init__(static_method.__func__, names=names, parent=parent)
-
-
-class ClassMethod(StaticMethod):
+class ClassMethod(Method, InitDunderFunc):
     _type = 'Class Method'
 
 
-class Module(DocObject):
+class Module(DocStringMix):
     header_level = 1
 
-    def __init__(self, module, names=None):
-        super().__init__(module, names=names)
-        all_ = getattr(module, '__all__', None)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        all_ = getattr(self.object, '__all__', None)
 
         if all_ is None:
             all_ = [
                 name
-                for name in vars(module).keys()
+                for name in vars(self.object).keys()
                 if not name.startswith('_')
             ]
 
         self.members = {
-            name: getattr(module, name, None)
+            name: getattr(self.object, name, None)
             for name in all_
         }
 
-        if super().doc:
-            self.template_lines = super().template_lines.copy()
-            self.template_lines.update(doc='{doc}')
 
-
-class Class(Function):
+class Class(DocCallable):
     header_level = 2
 
-    def __init__(self, class_, names=None):
-        super().__init__(class_, names=names)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.members = {
             name: obj
-            for name, obj in vars(class_).items()
+            for name, obj in vars(self.object).items()
             if not name.startswith('_')
         }
 
@@ -278,45 +298,30 @@ class Class(Function):
             return child_type
 
     def new_child(self, object_, name):
-        args = object_, super().names + [name]
+        args = object_,
+        kwargs = dict(names=super().names + [name])
         child_type = self.child_type(object_)
 
-        if issubclass(child_type, (Method, DataDescriptor)):
-            return child_type(*args, self)
+        if issubclass(child_type, ClassMemberMix):
+            return child_type(*args, **kwargs, parent=self)
         else:
-            return child_type(*args)
+            return child_type(*args, **kwargs)
 
 
 class Exception(Class):
     pass
 
 
-class DataDescriptor(DocObject):
+class DataDescriptor(ClassMemberMix, DocStringMix):
+    _type = 'Data Descriptor'
     header_level = 4
-
-    def __init__(self, data_descriptor, names=None, parent=None):
-        self.parent = parent
-        super().__init__(data_descriptor, names=names)
-
-        if self.parent is not None:
-            self.type += ' of class %s' % self.parent.link
-
-        if super().doc:
-            self.template_lines = super().template_lines.copy()
-            self.template_lines.update(doc='{doc}')
-
-    @property
-    def doc_data(self):
-        data = super().doc_data
-        data.update(self='[`self`](%s)' % self.parent.header_link)
-        return data
 
 
 def main():
     import importlib
     import sys
     module = importlib.import_module(sys.argv[1])
-    print(DocObject(module))
+    print(DocObject(module).str_all())
 
 
 if __name__ == '__main__':

@@ -144,19 +144,19 @@ Provides general functionality for all Path types.
 
 #### [collect](#collect).[PathBase](#collectpathbase).[parts](#collectpathbaseparts)
 
-*DataDescriptor of class [collect.PathBase](#collectpathbase)*
+*Data Descriptor of class [collect.PathBase](#collectpathbase)*
 
 Split the path by the OS path slash separator.
 
 #### [collect](#collect).[PathBase](#collectpathbase).[basename](#collectpathbasebasename)
 
-*DataDescriptor of class [collect.PathBase](#collectpathbase)*
+*Data Descriptor of class [collect.PathBase](#collectpathbase)*
 
 The final element in the path.
 
 #### [collect](#collect).[PathBase](#collectpathbase).[split](#collectpathbasesplit)
 
-*DataDescriptor of class [collect.PathBase](#collectpathbase)*
+*Data Descriptor of class [collect.PathBase](#collectpathbase)*
 
 Split the path's basename by filename and extension.
 
@@ -394,18 +394,18 @@ Make a directory exist under [`self`](#collectpath).
 
 #### [collect](#collect).[Path](#collectpath).[parent](#collectpathparent)
 
-*DataDescriptor of class [collect.Path](#collectpath)*
+*Data Descriptor of class [collect.Path](#collectpath)*
 
 Move up one directory.
 
 #### [collect](#collect).[Path](#collectpath).[type](#collectpathtype)
 
-*DataDescriptor of class [collect.Path](#collectpath)*
+*Data Descriptor of class [collect.Path](#collectpath)*
 
 Return the MIME type of [`self`](#collectpath).
 
 #### [collect](#collect).[Path](#collectpath).[tree](#collectpathtree)
 
-*DataDescriptor of class [collect.Path](#collectpath)*
+*Data Descriptor of class [collect.Path](#collectpath)*
 
 Generate the path tree for [`self`](#collectpath) (a directory).

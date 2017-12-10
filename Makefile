@@ -31,8 +31,8 @@ uninstall:
 clean:
 	rm -rf build *.egg-info dist **/__pycache__
 
-$(PWD)/DOC.md:
-	python $(PWD)/doc.py collect > $@
+%.md: $(PWD)/doc.py
+	python $< collect > $@
 
 docs: $(PWD)/DOC.md
 
