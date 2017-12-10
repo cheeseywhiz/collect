@@ -201,11 +201,11 @@ class Path(PathBase):
         return os.path.abspath(self)
 
     def __truediv__(self, other):
-        """Perform `{self}` / other` to join paths."""
+        """Perform {self}` / other` to join paths."""
         return self.join(other)
 
     def url_fname(self, url):
-        """Join the filename part of a url to `{self}`."""
+        """Join the filename part of a url to {self}."""
         return self / super().url_fname(url)
 
     def open(self, mode='r', buffering=-1, encoding=None, errors=None,
@@ -216,47 +216,47 @@ class Path(PathBase):
             errors=errors, newline=newline, closefd=closefd, opener=opener)
 
     def exists(self):
-        """Check if `{self}` exists on the filesystem."""
+        """Check if {self} exists on the filesystem."""
         return os.path.exists(self)
 
     def is_dir(self):
-        """Check if `{self}` is a directory."""
+        """Check if {self} is a directory."""
         return os.path.isdir(self)
 
     def is_file(self):
-        """Check `{self}` is a file on the filesystem."""
+        """Check {self} is a file on the filesystem."""
         return os.path.isfile(self)
 
     def is_link(self):
-        """Check if `{self}` is a symbolic link."""
+        """Check if {self} is a symbolic link."""
         return os.path.islink(self)
 
     def is_abs(self):
-        """Check if `{self}` is an absolute path."""
+        """Check if {self} is an absolute path."""
         return os.path.isabs(self)
 
     def __contains__(self, other):
-        """Check recursively if `other` is inside `{self}` (a directory)."""
+        """Check recursively if `other` is inside {self} (a directory)."""
         self = self.abspath()
         other = Path(other).abspath()
         return self._first_diff_part(other) < 0
 
     def contains_toplevel(self, other):
-        """Check if `other` is at the top level of `{self}` (a directory)."""
+        """Check if `other` is at the top level of {self} (a directory)."""
         self = self.abspath()
         other = other.abspath()
         return other in self and len(other.parts) - len(self.parts) == 1
 
     def is_toplevel(self, other):
-        """Check if `{self}` is in the top level of `other` (a directory)."""
+        """Check if {self} is in the top level of `other` (a directory)."""
         return Path(other).contains_toplevel(self)
 
     def is_in_dir(self, other):
-        """Check if `{self}` is inside `other` (a directory)."""
+        """Check if {self} is inside `other` (a directory)."""
         return self in Path(other)
 
     def rmtree(self, ignore_errors=False, onerror=None):
-        """Delete every file inside `{self}` (a directory)."""
+        """Delete every file inside {self} (a directory)."""
         shutil.rmtree(self, ignore_errors=ignore_errors, onerror=onerror)
 
     def remove(self):
@@ -269,12 +269,12 @@ class Path(PathBase):
             raise ValueError('%r is not a file or directory' % self)
 
     def remove_contents(self):
-        """Remove each file within `{self}` (a directory)."""
+        """Remove each file within {self} (a directory)."""
         for file in self:
             file.remove()
 
     def mkdir(self, mode=0o777, *, exist_ok=False, dir_fd=None):
-        """Make a directory exist under `{self}`."""
+        """Make a directory exist under {self}."""
         try:
             os.mkdir(self, mode=mode, dir_fd=dir_fd)
         except FileExistsError:
@@ -288,7 +288,7 @@ class Path(PathBase):
 
     @property
     def type(self):
-        """Return the MIME type of `{self}`."""
+        """Return the MIME type of {self}."""
         if self.is_dir():
             # mimic file(1) behavior
             return 'inode/directory'
@@ -303,7 +303,7 @@ class Path(PathBase):
 
     @property
     def tree(self):
-        """Generate the path tree for `{self}` (a directory)."""
+        """Generate the path tree for {self} (a directory)."""
         yield self
 
         for item in self:
@@ -316,5 +316,5 @@ class Path(PathBase):
                 yield item
 
     def __iter__(self):
-        """Return the toplevel path iterator for `{self}` (a directory)."""
+        """Return the toplevel path iterator for {self} (a directory)."""
         yield from map(self.join, os.listdir(self))
