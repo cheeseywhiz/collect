@@ -1,7 +1,8 @@
-import types as _types
 import builtins as _builtins
+import collections as _collections
 import functools as _functools
 import inspect as _inspect
+import types as _types
 
 
 def trim_first_n_spaces(string, n_spaces):
@@ -39,10 +40,10 @@ def trim_tabs(doc_string):
 class DocObject:
     """Python object to markdown helper. The initial name is inferred if not
     provided."""
-    template_lines = [
-        '{header} {name}',
-        '*{type}*',
-    ]
+    template_lines = _collections.OrderedDict(
+        header='{header} {name}',
+        type='*{type}*',
+    )
     header_level = 1
     _type = None
 
@@ -139,7 +140,7 @@ class DocObject:
         else:
             return DocObject
 
-    def new_child(self, name, object_):
+    def new_child(self, object_, name):
         """Return a new doc helper object that is a child of {self} within the
         hierarchy."""
         return DocObject(object_, self.names + [name])
@@ -151,7 +152,7 @@ class DocObject:
             child_type = self.child_type(child_obj)
 
             if child_type is not DocObject:
-                yield from self.new_child(name, child_obj)
+                yield from self.new_child(child_obj, name)
 
     def __repr__(self):
         cls = self.__class__
@@ -163,7 +164,7 @@ class DocObject:
         return '\n\n'.join(
             '\n\n'.join(
                 line.format(**obj.format_data)
-                for line in obj.template_lines
+                for line in obj.template_lines.values()
             )
             for obj in self
         )
@@ -171,10 +172,15 @@ class DocObject:
 
 class Function(DocObject):
     header_level = 3
-    template_lines = DocObject.template_lines + [
-        '```python\n{signature}\n```',
-        '{doc}',
-    ]
+    template_lines = DocObject.template_lines.copy()
+    template_lines.update(signature='```python\n{signature}\n```')
+
+    def __init__(self, function, names=None):
+        super().__init__(function, names=names)
+
+        if super().doc:
+            self.template_lines = self.template_lines.copy()
+            self.template_lines.update(doc='{doc}')
 
     @property
     def signature(self):
@@ -189,16 +195,14 @@ class Function(DocObject):
     @property
     def format_data(self):
         data = super().format_data
-        data.update({
-            'signature': self.signature,
-        })
+        data.update(signature=self.signature)
         return data
 
 
 class Method(Function):
     def __init__(self, object_, names=None, parent=None):
-        super().__init__(object_, names=names)
         self.parent = parent
+        super().__init__(object_, names=names)
 
         if self.parent is not None:
             self.type += ' of class %s' % self.parent.link
@@ -206,9 +210,7 @@ class Method(Function):
     @property
     def doc_data(self):
         data = super().doc_data
-        data.update({
-            'self': '[`self`](%s)' % self.parent.header_link,
-        })
+        data.update(self='[`self`](%s)' % self.parent.header_link)
         return data
 
 
@@ -230,7 +232,6 @@ class ClassMethod(StaticMethod):
 
 class Module(DocObject):
     header_level = 1
-    template_lines = DocObject.template_lines + ['{doc}']
 
     def __init__(self, module, names=None):
         super().__init__(module, names=names)
@@ -248,6 +249,10 @@ class Module(DocObject):
             for name in all_
         }
 
+        if super().doc:
+            self.template_lines = super().template_lines.copy()
+            self.template_lines.update(doc='{doc}')
+
 
 class Class(Function):
     header_level = 2
@@ -262,6 +267,9 @@ class Class(Function):
 
     @classmethod
     def child_type(cls, object_):
+        if _inspect.isdatadescriptor(object_):
+            return DataDescriptor
+
         child_type = super().child_type(object_)
 
         if child_type is Function:
@@ -269,11 +277,11 @@ class Class(Function):
         else:
             return child_type
 
-    def new_child(self, name, object_):
-        args = object_, self.names + [name]
+    def new_child(self, object_, name):
+        args = object_, super().names + [name]
         child_type = self.child_type(object_)
 
-        if issubclass(child_type, Method):
+        if issubclass(child_type, (Method, DataDescriptor)):
             return child_type(*args, self)
         else:
             return child_type(*args)
@@ -281,6 +289,27 @@ class Class(Function):
 
 class Exception(Class):
     pass
+
+
+class DataDescriptor(DocObject):
+    header_level = 4
+
+    def __init__(self, data_descriptor, names=None, parent=None):
+        self.parent = parent
+        super().__init__(data_descriptor, names=names)
+
+        if self.parent is not None:
+            self.type += ' of class %s' % self.parent.link
+
+        if super().doc:
+            self.template_lines = super().template_lines.copy()
+            self.template_lines.update(doc='{doc}')
+
+    @property
+    def doc_data(self):
+        data = super().doc_data
+        data.update(self='[`self`](%s)' % self.parent.header_link)
+        return data
 
 
 def main():
