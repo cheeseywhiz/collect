@@ -154,6 +154,30 @@ class ClassMemberMix(DocObject):
             module, name, self.object, self.names, self.parent
         )
 
+    @property
+    def doc(self):
+        doc = super().doc
+
+        if doc:
+            return doc
+
+        name = self.names[-1]
+
+        for cls in self.parent.object.__mro__[1:]:
+            cls_vars = vars(cls)
+
+            if name not in cls_vars:
+                continue
+
+            cls_doc = DocObject(cls)
+            child_doc = cls_doc.new_child(cls_vars[name], name)
+            doc = child_doc.doc
+
+            if doc:
+                return doc
+        else:
+            return ''
+
 
 class DocStringMix(DocObject):
     @staticmethod
@@ -244,12 +268,12 @@ class CallableMix(DocObject):
         return data
 
 
-class DocCallableMix(DocStringMix, CallableMix):
+class DocStringCallableMix(DocStringMix, CallableMix):
     # because order is significant
     pass
 
 
-class Function(DocCallableMix):
+class Function(DocStringCallableMix):
     header_level = 3
 
 
@@ -293,7 +317,7 @@ class Module(DocStringMix):
         }
 
 
-class Class(DocCallableMix):
+class Class(DocStringCallableMix):
     header_level = 2
 
     def __init__(self, *args, **kwargs):
