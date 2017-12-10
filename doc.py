@@ -91,7 +91,7 @@ class DocObject:
             return DocObject
 
     def new_child(self, name, object_):
-        return self.child_type(object_)(object_, self.names + [name])
+        return DocObject(object_, self.names + [name])
 
     def __iter__(self):
         yield self
@@ -109,10 +109,17 @@ class DocObject:
         return '%s.%s(%r, names=%r)' % (module, name, self.object, self.names)
 
     def __str__(self):
-        return '\n\n'.join(
-            self.template.format(**obj.format_data)
-            for obj in self
-        )
+        # return '\n\n'.join(
+        #     self.template.format(**obj.format_data)
+        #     for obj in self
+        # )
+        parts = []
+
+        for object_ in self:
+            doc = self.template.format(**object_.format_data)
+            parts.append(doc)
+
+        return '\n\n'.join(parts)
 
 
 class Function(DocObject):
@@ -126,7 +133,19 @@ class Method(Function):
     def __init__(self, object_, names=None, parent=None):
         super().__init__(object_, names=names)
         self.parent = parent
-        self.type += ' of class %s' % self.parent.link
+
+        if self.parent:
+            self.type += ' of class %s' % self.parent.link
+
+    @property
+    def doc_data(self):
+        return {
+            'self': '[self](#%s)' % ''.join(self.parent.names).lower(),
+        }
+
+    @property
+    def doc(self):
+        return super().doc.format(**self.doc_data)
 
 
 class StaticMethod(Method):

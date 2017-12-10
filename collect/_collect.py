@@ -107,7 +107,7 @@ class RedditListingWrapper:
         return post
 
     def next_download(self):
-        """`next(self)` while downloading the submission's image."""
+        """`next({self})` while downloading the submission's image."""
         post = next(self)
 
         if post.path in self.existing_paths:
@@ -121,7 +121,7 @@ class RedditListingWrapper:
             return post
 
     def next_no_repeat(self):
-        """`next(self)` while skipping submissions that have already been
+        """`next({self})` while skipping submissions that have already been
         collected."""
         post = next(self)
 
@@ -131,7 +131,8 @@ class RedditListingWrapper:
             return post
 
     def next_no_repeat_download(self):
-        """`self.next_no_repeat()` while downloading the submisson's image."""
+        """`{self}.next_no_repeat()` while downloading the submisson's
+        image."""
         post = self.next_download()
 
         if post.path in self.existing_paths:
