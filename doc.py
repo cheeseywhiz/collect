@@ -28,7 +28,7 @@ def trim_tabs(doc_string):
             if char != ' '
         )
     except StopIteration:
-        num_spaces = 0
+        return doc_string
 
     return '\n'.join(
         trim_first_n_spaces(line, num_spaces)
@@ -90,13 +90,17 @@ class DocObject:
         }
 
     @property
+    def doc_data(self):
+        return {}
+
+    @property
     def doc(self):
         doc = getattr(self.object, '__doc__', None) or ''
 
         if doc:
             doc = trim_tabs(doc)
 
-        return doc
+        return doc.format(**self.doc_data)
 
     @property
     def type(self):
@@ -195,13 +199,11 @@ class Method(Function):
 
     @property
     def doc_data(self):
-        return {
+        data = super().doc_data
+        data.update({
             'self': '[`self`](%s)' % self.parent.header_link,
-        }
-
-    @property
-    def doc(self):
-        return super().doc.format(**self.doc_data)
+        })
+        return data
 
 
 class StaticMethod(Method):
@@ -241,10 +243,9 @@ class Module(DocObject):
         }
 
 
-class Class(DocObject):
+class Class(Function):
     """Class doc helper"""
     header_level = 2
-    template_lines = DocObject.template_lines + ['{doc}']
 
     def __init__(self, class_, names=None):
         super().__init__(class_, names=names)
