@@ -67,6 +67,7 @@ class DocObject:
 
     @property
     def names(self):
+        """The list of names up to this object in the hierarchy."""
         return self._names
 
     @names.setter
@@ -82,6 +83,7 @@ class DocObject:
 
     @property
     def format_data(self):
+        """The dict of information sent to the template."""
         return {
             'name': self.link_chain,
             'type': self.type,
@@ -91,10 +93,13 @@ class DocObject:
 
     @property
     def doc_data(self):
+        """The dict of information available to user docstrings."""
         return {}
 
     @property
     def doc(self):
+        """The object's docstring with removed indentation and formatted with
+        doc_data."""
         doc = getattr(self.object, '__doc__', None) or ''
 
         if doc:
@@ -104,6 +109,7 @@ class DocObject:
 
     @property
     def type(self):
+        """The subtitle of the object indicating what is is."""
         return self._type or self.__class__.__name__
 
     @type.setter
@@ -134,6 +140,8 @@ class DocObject:
             return DocObject
 
     def new_child(self, name, object_):
+        """Return a new doc helper object that is a child of {self} within the
+        hierarchy."""
         return DocObject(object_, self.names + [name])
 
     def __iter__(self):
@@ -162,15 +170,15 @@ class DocObject:
 
 
 class Function(DocObject):
-    """Python function documentation helper"""
     header_level = 3
     template_lines = DocObject.template_lines + [
-        '```\n{signature}\n```',
+        '```python\n{signature}\n```',
         '{doc}',
     ]
 
     @property
     def signature(self):
+        """The call signature of the object."""
         try:
             sig = str(_inspect.signature(self.object))
         except ValueError:
@@ -188,8 +196,6 @@ class Function(DocObject):
 
 
 class Method(Function):
-    """Method function documentation helper"""
-
     def __init__(self, object_, names=None, parent=None):
         super().__init__(object_, names=names)
         self.parent = parent
@@ -244,7 +250,6 @@ class Module(DocObject):
 
 
 class Class(Function):
-    """Class doc helper"""
     header_level = 2
 
     def __init__(self, class_, names=None):
