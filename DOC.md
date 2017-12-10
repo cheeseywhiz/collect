@@ -16,7 +16,8 @@ downloading.
 *Method of class [collect.RedditSubmissionWrapper](#collectredditsubmissionwrapper)*
 
 ```python
-f()```
+f()
+```
 
 Save a picture to [`self`](#collectredditsubmissionwrapper). Raises `ValueError` if the HTTP
 response indicates that we did not receive an image.
@@ -26,7 +27,8 @@ response indicates that we did not receive an image.
 *Method of class [collect.RedditSubmissionWrapper](#collectredditsubmissionwrapper)*
 
 ```python
-f()```
+f()
+```
 
 Log the submission's title, comment URL, and link URL.
 
@@ -42,7 +44,8 @@ and handling certain behaviors.
 *Method of class [collect.RedditListingWrapper](#collectredditlistingwrapper)*
 
 ```python
-f()```
+f()
+```
 
 `next(`[`self`](#collectredditlistingwrapper)`)` while downloading the submission's image.
 
@@ -51,7 +54,8 @@ f()```
 *Method of class [collect.RedditListingWrapper](#collectredditlistingwrapper)*
 
 ```python
-f()```
+f()
+```
 
 `next(`[`self`](#collectredditlistingwrapper)`)` while skipping submissions that have already been
 collected.
@@ -61,7 +65,8 @@ collected.
 *Method of class [collect.RedditListingWrapper](#collectredditlistingwrapper)*
 
 ```python
-f()```
+f()
+```
 
 [`self`](#collectredditlistingwrapper)`.next_no_repeat()` while downloading the submisson's
 image.
@@ -71,7 +76,8 @@ image.
 *Method of class [collect.RedditListingWrapper](#collectredditlistingwrapper)*
 
 ```python
-f()```
+f()
+```
 
 Download the next submission's image according to the specified
 flags.
@@ -81,7 +87,8 @@ flags.
 *Method of class [collect.RedditListingWrapper](#collectredditlistingwrapper)*
 
 ```python
-f()```
+f()
+```
 
 Download the next submission's image but handle collection errors
 according to the flags.
@@ -97,7 +104,8 @@ Perform image collection operations on a path.
 *Method of class [collect.Collect](#collectcollect)*
 
 ```python
-f()```
+f()
+```
 
 Helper for new `RedditListingWrapper` at [`self`](#collectcollect).
 
@@ -106,7 +114,8 @@ Helper for new `RedditListingWrapper` at [`self`](#collectcollect).
 *Method of class [collect.Collect](#collectcollect)*
 
 ```python
-f()```
+f()
+```
 
 Return a random file within [`self`](#collectcollect) (a directory). Raises
 `FileNotFoundError` if no suitable file was found.
@@ -122,7 +131,8 @@ Provides general functionality for all Path types.
 *Static Method of class [collect.PathBase](#collectpathbase)*
 
 ```python
-f()```
+f()
+```
 
 Return the filename part of a url.
 
@@ -137,7 +147,8 @@ Provides the numerous class methods for all Path types.
 *Method of class [collect.PathMeta](#collectpathmeta)*
 
 ```python
-f()```
+f()
+```
 
 Return the user's home directory.
 
@@ -146,7 +157,8 @@ Return the user's home directory.
 *Method of class [collect.PathMeta](#collectpathmeta)*
 
 ```python
-f()```
+f()
+```
 
 Return the current working directory.
 
@@ -162,7 +174,8 @@ paths.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Connect one or more file names onto this path.
 
@@ -171,7 +184,8 @@ Connect one or more file names onto this path.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Return the absolute path and eliminate symbolic links.
 
@@ -180,7 +194,8 @@ Return the absolute path and eliminate symbolic links.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Return the abbreviated form of self relative to start. Default for
 `start` is the current working directory.
@@ -190,7 +205,8 @@ Return the abbreviated form of self relative to start. Default for
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Return the absolute path.
 
@@ -199,7 +215,8 @@ Return the absolute path.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Join the filename part of a url to [`self`](#collectpath).
 
@@ -208,7 +225,8 @@ Join the filename part of a url to [`self`](#collectpath).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Open the file for changing.
 
@@ -217,7 +235,8 @@ Open the file for changing.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Check if [`self`](#collectpath) exists on the filesystem.
 
@@ -226,7 +245,8 @@ Check if [`self`](#collectpath) exists on the filesystem.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Check if [`self`](#collectpath) is a directory.
 
@@ -235,7 +255,8 @@ Check if [`self`](#collectpath) is a directory.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Check [`self`](#collectpath) is a file on the filesystem.
 
@@ -244,7 +265,8 @@ Check [`self`](#collectpath) is a file on the filesystem.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Check if [`self`](#collectpath) is a symbolic link.
 
@@ -253,7 +275,8 @@ Check if [`self`](#collectpath) is a symbolic link.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Check if [`self`](#collectpath) is an absolute path.
 
@@ -262,7 +285,8 @@ Check if [`self`](#collectpath) is an absolute path.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Check if `other` is at the top level of [`self`](#collectpath) (a directory).
 
@@ -271,7 +295,8 @@ Check if `other` is at the top level of [`self`](#collectpath) (a directory).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Check if [`self`](#collectpath) is in the top level of `other` (a directory).
 
@@ -280,7 +305,8 @@ Check if [`self`](#collectpath) is in the top level of `other` (a directory).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Check if [`self`](#collectpath) is inside `other` (a directory).
 
@@ -289,7 +315,8 @@ Check if [`self`](#collectpath) is inside `other` (a directory).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Delete every file inside [`self`](#collectpath) (a directory).
 
@@ -298,7 +325,8 @@ Delete every file inside [`self`](#collectpath) (a directory).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Remove a file or a directory (if empty).
 
@@ -307,7 +335,8 @@ Remove a file or a directory (if empty).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Remove each file within [`self`](#collectpath) (a directory).
 
@@ -316,6 +345,7 @@ Remove each file within [`self`](#collectpath) (a directory).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()```
+f()
+```
 
 Make a directory exist under [`self`](#collectpath).

@@ -160,7 +160,7 @@ class Function(DocObject):
     """Python function documentation helper"""
     header_level = 3
     template_lines = DocObject.template_lines + [
-        '```python\n{signature}```',
+        '```python\n{signature}\n```',
         '{doc}',
     ]
 
