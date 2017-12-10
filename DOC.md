@@ -16,7 +16,7 @@ downloading.
 *Method of class [collect.RedditSubmissionWrapper](#collectredditsubmissionwrapper)*
 
 ```python
-f()
+collect.RedditSubmissionWrapper.download(self)
 ```
 
 Save a picture to [`self`](#collectredditsubmissionwrapper). Raises `ValueError` if the HTTP
@@ -27,7 +27,7 @@ response indicates that we did not receive an image.
 *Method of class [collect.RedditSubmissionWrapper](#collectredditsubmissionwrapper)*
 
 ```python
-f()
+collect.RedditSubmissionWrapper.log(self)
 ```
 
 Log the submission's title, comment URL, and link URL.
@@ -44,7 +44,7 @@ and handling certain behaviors.
 *Method of class [collect.RedditListingWrapper](#collectredditlistingwrapper)*
 
 ```python
-f()
+collect.RedditListingWrapper.next_download(self)
 ```
 
 `next(`[`self`](#collectredditlistingwrapper)`)` while downloading the submission's image.
@@ -54,7 +54,7 @@ f()
 *Method of class [collect.RedditListingWrapper](#collectredditlistingwrapper)*
 
 ```python
-f()
+collect.RedditListingWrapper.next_no_repeat(self)
 ```
 
 `next(`[`self`](#collectredditlistingwrapper)`)` while skipping submissions that have already been
@@ -65,7 +65,7 @@ collected.
 *Method of class [collect.RedditListingWrapper](#collectredditlistingwrapper)*
 
 ```python
-f()
+collect.RedditListingWrapper.next_no_repeat_download(self)
 ```
 
 [`self`](#collectredditlistingwrapper)`.next_no_repeat()` while downloading the submisson's
@@ -76,7 +76,7 @@ image.
 *Method of class [collect.RedditListingWrapper](#collectredditlistingwrapper)*
 
 ```python
-f()
+collect.RedditListingWrapper.flags_next_download(self, flags)
 ```
 
 Download the next submission's image according to the specified
@@ -87,7 +87,7 @@ flags.
 *Method of class [collect.RedditListingWrapper](#collectredditlistingwrapper)*
 
 ```python
-f()
+collect.RedditListingWrapper.flags_next_recover(self, flags)
 ```
 
 Download the next submission's image but handle collection errors
@@ -104,7 +104,7 @@ Perform image collection operations on a path.
 *Method of class [collect.Collect](#collectcollect)*
 
 ```python
-f()
+collect.Collect.reddit_listing(self, api_url)
 ```
 
 Helper for new `RedditListingWrapper` at [`self`](#collectcollect).
@@ -114,7 +114,7 @@ Helper for new `RedditListingWrapper` at [`self`](#collectcollect).
 *Method of class [collect.Collect](#collectcollect)*
 
 ```python
-f()
+collect.Collect.random(self)
 ```
 
 Return a random file within [`self`](#collectcollect) (a directory). Raises
@@ -131,7 +131,7 @@ Provides general functionality for all Path types.
 *Static Method of class [collect.PathBase](#collectpathbase)*
 
 ```python
-f()
+collect.PathBase.url_fname(url)
 ```
 
 Return the filename part of a url.
@@ -147,7 +147,7 @@ Provides the numerous class methods for all Path types.
 *Method of class [collect.PathMeta](#collectpathmeta)*
 
 ```python
-f()
+collect.PathMeta.home(self)
 ```
 
 Return the user's home directory.
@@ -157,7 +157,7 @@ Return the user's home directory.
 *Method of class [collect.PathMeta](#collectpathmeta)*
 
 ```python
-f()
+collect.PathMeta.cwd(self)
 ```
 
 Return the current working directory.
@@ -174,7 +174,7 @@ paths.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.join(self, *others)
 ```
 
 Connect one or more file names onto this path.
@@ -184,7 +184,7 @@ Connect one or more file names onto this path.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.realpath(self)
 ```
 
 Return the absolute path and eliminate symbolic links.
@@ -194,7 +194,7 @@ Return the absolute path and eliminate symbolic links.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.relpath(self, start=None)
 ```
 
 Return the abbreviated form of self relative to start. Default for
@@ -205,7 +205,7 @@ Return the abbreviated form of self relative to start. Default for
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.abspath(self)
 ```
 
 Return the absolute path.
@@ -215,7 +215,7 @@ Return the absolute path.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.url_fname(self, url)
 ```
 
 Join the filename part of a url to [`self`](#collectpath).
@@ -225,7 +225,7 @@ Join the filename part of a url to [`self`](#collectpath).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.open(self, mode='r', buffering=-1, encoding=None, errors=None, newline=None, closefd=True, opener=None)
 ```
 
 Open the file for changing.
@@ -235,7 +235,7 @@ Open the file for changing.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.exists(self)
 ```
 
 Check if [`self`](#collectpath) exists on the filesystem.
@@ -245,7 +245,7 @@ Check if [`self`](#collectpath) exists on the filesystem.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.is_dir(self)
 ```
 
 Check if [`self`](#collectpath) is a directory.
@@ -255,7 +255,7 @@ Check if [`self`](#collectpath) is a directory.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.is_file(self)
 ```
 
 Check [`self`](#collectpath) is a file on the filesystem.
@@ -265,7 +265,7 @@ Check [`self`](#collectpath) is a file on the filesystem.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.is_link(self)
 ```
 
 Check if [`self`](#collectpath) is a symbolic link.
@@ -275,7 +275,7 @@ Check if [`self`](#collectpath) is a symbolic link.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.is_abs(self)
 ```
 
 Check if [`self`](#collectpath) is an absolute path.
@@ -285,7 +285,7 @@ Check if [`self`](#collectpath) is an absolute path.
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.contains_toplevel(self, other)
 ```
 
 Check if `other` is at the top level of [`self`](#collectpath) (a directory).
@@ -295,7 +295,7 @@ Check if `other` is at the top level of [`self`](#collectpath) (a directory).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.is_toplevel(self, other)
 ```
 
 Check if [`self`](#collectpath) is in the top level of `other` (a directory).
@@ -305,7 +305,7 @@ Check if [`self`](#collectpath) is in the top level of `other` (a directory).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.is_in_dir(self, other)
 ```
 
 Check if [`self`](#collectpath) is inside `other` (a directory).
@@ -315,7 +315,7 @@ Check if [`self`](#collectpath) is inside `other` (a directory).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.rmtree(self, ignore_errors=False, onerror=None)
 ```
 
 Delete every file inside [`self`](#collectpath) (a directory).
@@ -325,7 +325,7 @@ Delete every file inside [`self`](#collectpath) (a directory).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.remove(self)
 ```
 
 Remove a file or a directory (if empty).
@@ -335,7 +335,7 @@ Remove a file or a directory (if empty).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.remove_contents(self)
 ```
 
 Remove each file within [`self`](#collectpath) (a directory).
@@ -345,7 +345,7 @@ Remove each file within [`self`](#collectpath) (a directory).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-f()
+collect.Path.mkdir(self, mode=511, *, exist_ok=False, dir_fd=None)
 ```
 
 Make a directory exist under [`self`](#collectpath).

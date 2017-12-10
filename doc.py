@@ -1,6 +1,7 @@
 import types as _types
 import builtins as _builtins
 import functools as _functools
+import inspect as _inspect
 
 
 def trim_first_n_spaces(string, n_spaces):
@@ -160,13 +161,18 @@ class Function(DocObject):
     """Python function documentation helper"""
     header_level = 3
     template_lines = DocObject.template_lines + [
-        '```python\n{signature}\n```',
+        '```\n{signature}\n```',
         '{doc}',
     ]
 
     @property
     def signature(self):
-        return 'f()'
+        try:
+            sig = str(_inspect.signature(self.object))
+        except ValueError:
+            sig = '(...)'
+
+        return '{name}{sig}'.format(sig=sig, name=self.name)
 
     @property
     def format_data(self):
