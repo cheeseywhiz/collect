@@ -11,24 +11,29 @@ class DocObject:
     header_level = 1
     _type = None
 
-    def __new__(cls, object_, *args, names=None, **kwargs):
+    def __new__(cls, object_, *args, **kwargs):
         if cls is DocObject:
             cls = cls.child_type(object_)
 
         return super().__new__(cls)
 
+    @staticmethod
+    def normalize_name(object_, name, arg_name):
+        if name is None:
+            name = getattr(object_, '__name__', None)
+
+            if name is None:
+                raise TypeError('Missing argument \'{}\''.format(arg_name))
+
+        if isinstance(name, str):
+            name = [name]
+
+        return name
+
     def __init__(self, object_, *args, names=None, **kwargs):
-        if names is None:
-            names = getattr(object_, '__name__', None)
-            if names is None:
-                raise TypeError('Missing keyword argument \'names\'')
-
-        if isinstance(names, str):
-            names = [names]
-
         self.members = {}
         self.object = object_
-        self.names = names
+        self.names = self.normalize_name(object_, names, 'names')
 
     @property
     def template_lines(self):
@@ -95,10 +100,11 @@ class DocObject:
         else:
             return DocObject
 
-    def new_child(self, object_, name):
+    def new_child(self, object_, name=None):
         """Return a new doc helper object that is a child of {self} within the
         hierarchy."""
-        return DocObject(object_, names=self.names + [name])
+        name = self.normalize_name(object_, name, 'name')
+        return DocObject(object_, names=self.names + name)
 
     def __iter__(self):
         yield self
@@ -140,6 +146,14 @@ class ClassMemberMix(DocObject):
         data.update(self='[`self`](%s)' % self.parent.header_link)
         return data
 
+    def __repr__(self):
+        cls = self.__class__
+        module = cls.__module__
+        name = cls.__name__
+        return '%s.%s(%r, names=%r, parent=%r)' % (
+            module, name, self.object, self.names, self.parent
+        )
+
 
 class DocStringMix(DocObject):
     @staticmethod
@@ -179,14 +193,13 @@ class DocStringMix(DocObject):
         lines = super().template_lines
 
         if self.doc:
-            lines = lines.copy()
             lines.update(doc='{doc}')
 
         return lines
 
     @property
     def format_data(self):
-        data = super().format_data.copy()
+        data = super().format_data
         data.update(doc=self.doc)
         return data
 
@@ -210,7 +223,7 @@ class DocStringMix(DocObject):
 class CallableMix(DocObject):
     @property
     def template_lines(self):
-        lines = super().template_lines.copy()
+        lines = super().template_lines
         lines.update(signature='```python\n{signature}\n```')
         return lines
 
@@ -226,7 +239,7 @@ class CallableMix(DocObject):
 
     @property
     def format_data(self):
-        data = super().format_data.copy()
+        data = super().format_data
         data.update(signature=self.signature)
         return data
 
@@ -303,15 +316,16 @@ class Class(DocCallableMix):
         else:
             return child_type
 
-    def new_child(self, object_, name):
+    def new_child(self, object_, name=None):
+        name = self.normalize_name(object_, name, 'name')
         args = object_,
-        kwargs = dict(names=super().names + [name])
+        kwargs = dict(names=super().names + name)
         child_type = self.child_type(object_)
 
         if issubclass(child_type, ClassMemberMix):
-            return child_type(*args, **kwargs, parent=self)
-        else:
-            return child_type(*args, **kwargs)
+            kwargs.update(parent=self)
+
+        return child_type(*args, **kwargs)
 
 
 class Exception(Class):
