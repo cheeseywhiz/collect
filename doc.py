@@ -5,38 +5,6 @@ import inspect as _inspect
 import types as _types
 
 
-def trim_first_n_spaces(string, n_spaces):
-    for j, char in enumerate(string):
-        if j >= n_spaces or char != ' ':
-            return string[j:]
-    else:
-        return ''
-
-
-def trim_tabs(doc_string):
-    """Trim the extra space indentation off of a docstring."""
-    doc_lines = doc_string.splitlines()
-
-    try:
-        index = next(i for i, line in enumerate(doc_lines[1:], 1) if line)
-    except StopIteration:
-        return doc_string
-
-    try:
-        num_spaces = next(
-            j
-            for j, char in enumerate(doc_lines[index])
-            if char != ' '
-        )
-    except StopIteration:
-        return doc_string
-
-    return '\n'.join(
-        trim_first_n_spaces(line, num_spaces)
-        for line in doc_lines
-    )
-
-
 class DocObject:
     """Python object to markdown helper. The initial name is inferred if not
     provided."""
@@ -64,6 +32,7 @@ class DocObject:
 
     @property
     def template_lines(self):
+        """The template of each object."""
         return _collections.OrderedDict([
             ('header', '{header} {name}'),
             ('type', '*{type}*'),
@@ -91,25 +60,8 @@ class DocObject:
         return {
             'name': self.link_chain,
             'type': self.type,
-            'doc': self.doc,
             'header': '#' * self.header_level,
         }
-
-    @property
-    def doc_data(self):
-        """The dict of information available to user docstrings."""
-        return {}
-
-    @property
-    def doc(self):
-        """The object's docstring with removed indentation and formatted with
-        doc_data."""
-        doc = getattr(self.object, '__doc__', None) or ''
-
-        if doc:
-            doc = trim_tabs(doc)
-
-        return doc.format(**self.doc_data)
 
     @property
     def type(self):
@@ -190,15 +142,69 @@ class ClassMemberMix(DocObject):
 
 
 class DocStringMix(DocObject):
+    @staticmethod
+    def trim_first_n_spaces(string, n_spaces):
+        for j, char in enumerate(string):
+            if j >= n_spaces or char != ' ':
+                return string[j:]
+        else:
+            return ''
+
+    @staticmethod
+    def trim_tabs(doc_string):
+        """Trim the extra space indentation off of a docstring."""
+        doc_lines = doc_string.splitlines()
+
+        try:
+            index = next(i for i, line in enumerate(doc_lines[1:], 1) if line)
+        except StopIteration:
+            return doc_string
+
+        try:
+            num_spaces = next(
+                j
+                for j, char in enumerate(doc_lines[index])
+                if char != ' '
+            )
+        except StopIteration:
+            return doc_string
+
+        return '\n'.join(
+            DocStringMix.trim_first_n_spaces(line, num_spaces)
+            for line in doc_lines
+        )
+
     @property
     def template_lines(self):
         lines = super().template_lines
 
-        if super().doc:
+        if self.doc:
             lines = lines.copy()
             lines.update(doc='{doc}')
 
         return lines
+
+    @property
+    def format_data(self):
+        data = super().format_data.copy()
+        data.update(doc=self.doc)
+        return data
+
+    @property
+    def doc_data(self):
+        """The dict of information available to user docstrings."""
+        return {}
+
+    @property
+    def doc(self):
+        """The object's docstring with removed indentation and formatted with
+        doc_data."""
+        doc = getattr(self.object, '__doc__', None) or ''
+
+        if doc:
+            doc = DocStringMix.trim_tabs(doc)
+
+        return doc.format(**self.doc_data)
 
 
 class CallableMix(DocObject):
@@ -220,17 +226,17 @@ class CallableMix(DocObject):
 
     @property
     def format_data(self):
-        data = super().format_data
+        data = super().format_data.copy()
         data.update(signature=self.signature)
         return data
 
 
-class DocCallable(DocStringMix, CallableMix):
+class DocCallableMix(DocStringMix, CallableMix):
     # because order is significant
     pass
 
 
-class Function(DocCallable):
+class Function(DocCallableMix):
     header_level = 3
 
 
@@ -246,11 +252,11 @@ class InitDunderFunc(DocObject):
         super().__init__(object_.__func__, *args, **kwargs)
 
 
-class StaticMethod(Method, InitDunderFunc):
+class StaticMethod(InitDunderFunc, Method):
     _type = 'Static Method'
 
 
-class ClassMethod(Method, InitDunderFunc):
+class ClassMethod(InitDunderFunc, Method):
     _type = 'Class Method'
 
 
@@ -274,7 +280,7 @@ class Module(DocStringMix):
         }
 
 
-class Class(DocCallable):
+class Class(DocCallableMix):
     header_level = 2
 
     def __init__(self, *args, **kwargs):
