@@ -96,7 +96,7 @@ class CollectParser(argparse.ArgumentParser):
 
         super().add_argument(
             '--dir', metavar='PATH', dest='collector',
-            default=_config.DIRECTORY, type=_collect.CollectFront,
+            default=_config.DIRECTORY, type=_collect.Collect,
             help='Set the download location. Default %s' % _config.DIRECTORY)
         super().add_argument(
             '-v', action='count',

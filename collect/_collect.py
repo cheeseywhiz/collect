@@ -11,10 +11,7 @@ from . import _path
 from ._flags import *
 from ._flags import __all__ as _flags_all
 
-__all__ = [
-    'RedditSubmissionWrapper', 'RedditListingWrapper', 'Collect',
-    'ListingFront', 'CollectFront',
-]
+__all__ = ['RedditSubmissionWrapper', 'RedditListingWrapper', 'Collect']
 __all__.extend(_flags_all)
 
 _reddit_inited = False
@@ -102,13 +99,9 @@ class RedditListingWrapper:
     def __init__(self, path, api_url):
         self.path = Collect(path)
         self.url = api_url
-        self.listing = self.get(api_url)
+        self.listing = _reddit().get(api_url)
         self.posts = _randomized(list(self.listing))
         self.existing_paths = {}
-
-    def get(self, api_url):
-        """Return the submission listing at the Reddit API URL."""
-        return _reddit().get(api_url)
 
     def __iter__(self):
         """Allow {self} to be used as an iterator."""
@@ -219,11 +212,10 @@ class RedditListingWrapper:
 
 class Collect(_path.Path):
     """Perform image collection operations on a path."""
-    _listing_type = RedditListingWrapper
 
     def reddit_listing(self, api_url):
         """Helper for new `RedditListingWrapper` at {self}."""
-        return self._listing_type(self, api_url)
+        return RedditListingWrapper(self, api_url)
 
     def random(self):
         """Return a random file within {self} (a directory). Raises
@@ -236,18 +228,3 @@ class Collect(_path.Path):
             )
         except StopIteration:
             raise FileNotFoundError('No suitable files: %s' % self)
-
-
-class ListingFront(RedditListingWrapper):
-    """Enable front page listing via \'/front\' URL."""
-
-    def get(self, api_url, **generator_kwargs):
-        if api_url == '/front':
-            return _reddit().front.hot(**generator_kwargs)
-        else:
-            return super().get(api_url)
-
-
-class CollectFront(Collect):
-    """Reddit collector with front page option."""
-    _listing_type = ListingFront
