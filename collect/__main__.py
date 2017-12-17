@@ -81,6 +81,9 @@ class CollectParser(argparse.ArgumentParser):
             default=_config.REDDIT_URL,
             help='Set the URL for the Reddit API listing. '
                  'Default %s' % _config.REDDIT_URL)
+        reddit.add_argument(
+            '--user', '-s', metavar='NAME', dest='user', default='DEFAULT',
+            help='Select non-default praw.ini profile.')
 
         commands.add_parser(
             'random',
@@ -93,7 +96,7 @@ class CollectParser(argparse.ArgumentParser):
 
         super().add_argument(
             '--dir', metavar='PATH', dest='collector',
-            default=_config.DIRECTORY, type=_collect.Collect,
+            default=_config.DIRECTORY, type=_collect.CollectFront,
             help='Set the download location. Default %s' % _config.DIRECTORY)
         super().add_argument(
             '-v', action='count',
@@ -157,6 +160,7 @@ class CollectParser(argparse.ArgumentParser):
                 args.exit = 1
                 return
 
+        _collect._reddit_init(args.user)
         listing = args.collector.reddit_listing(args.reddit_url)
 
         with log_exceptions(args, FileNotFoundError, RuntimeError):

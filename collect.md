@@ -47,6 +47,16 @@ collect.RedditListingWrapper(path, api_url)
 Wrapper for Reddit listing generators to facilitate image downloading
 and handling certain behaviors.
 
+### [collect](#collect).[RedditListingWrapper](#collectredditlistingwrapper).[get](#collectredditlistingwrapperget)
+
+*Method of class [collect.RedditListingWrapper](#collectredditlistingwrapper)*
+
+```python
+collect.RedditListingWrapper.get(self, api_url)
+```
+
+Return the submission listing at the Reddit API URL.
+
 ### [collect](#collect).[RedditListingWrapper](#collectredditlistingwrapper).[next_download](#collectredditlistingwrappernext_download)
 
 *Method of class [collect.RedditListingWrapper](#collectredditlistingwrapper)*
@@ -131,6 +141,36 @@ collect.Collect.random(self)
 
 Return a random file within [`self`](#collectcollect) (a directory). Raises
 `FileNotFoundError` if no suitable file was found.
+
+## [collect](#collect).[ListingFront](#collectlistingfront)
+
+*Class*
+
+```python
+collect.ListingFront(path, api_url)
+```
+
+Enable front page listing via '/front' URL.
+
+### [collect](#collect).[ListingFront](#collectlistingfront).[get](#collectlistingfrontget)
+
+*Method of class [collect.ListingFront](#collectlistingfront)*
+
+```python
+collect.ListingFront.get(self, api_url, **generator_kwargs)
+```
+
+Return the submission listing at the Reddit API URL.
+
+## [collect](#collect).[CollectFront](#collectcollectfront)
+
+*Class*
+
+```python
+collect.CollectFront(path=None)
+```
+
+Reddit collector with front page option.
 
 ## [collect](#collect).[PathBase](#collectpathbase)
 

@@ -194,11 +194,11 @@ class DocStringMix(DocObject):
         doc_lines = doc_string.splitlines()
 
         try:
-            index = next(i for i, line in enumerate(doc_lines[1:], 1) if line)
-        except StopIteration:
-            return doc_string
-
-        try:
+            index = next(
+                i
+                for i, line in enumerate(doc_lines[1:], 1)
+                if line
+            )
             num_spaces = next(
                 j
                 for j, char in enumerate(doc_lines[index])
