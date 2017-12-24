@@ -275,11 +275,10 @@ class Path(PathBase):
 
     def mkdir(self, mode=0o777, *, exist_ok=False, dir_fd=None):
         """Make a directory exist under {self}."""
-        try:
+        if exist_ok and self.exists():
+            return
+        else:
             os.mkdir(self, mode=mode, dir_fd=dir_fd)
-        except FileExistsError:
-            if not exist_ok:
-                raise
 
     @property
     def parent(self):

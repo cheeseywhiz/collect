@@ -79,7 +79,7 @@ class RedditSubmissionWrapper:
         response indicates that we did not receive an image."""
         res = _get_image(self.url)
 
-        with open(self.path, 'wb') as file:
+        with self.path.open('wb') as file:
             file.write(res.content)
 
         Logger.debug('Collected new image: %s', self.url)
@@ -119,7 +119,6 @@ class RedditListingWrapper:
         if post.path.exists():
             Logger.debug('Already downloaded: %s' % post.url)
             self.existing_paths[post.path] = post
-            return post
 
         return post
 
@@ -127,22 +126,20 @@ class RedditListingWrapper:
         """`next(`{self}`)` while downloading the submission's image."""
         post = next(self)
 
-        if post.path in self.existing_paths:
+        if post.path.exists():
             return post
 
         try:
-            post.download()
+            return post.download()
         except ValueError as error:
             return self.next_download()
-        else:
-            return post
 
     def next_no_repeat(self):
         """`next(`{self}`)` while skipping submissions that have already been
         collected."""
         post = next(self)
 
-        if post.path in self.existing_paths:
+        if post.path.exists():
             return self.next_no_repeat()
         else:
             return post
@@ -150,12 +147,10 @@ class RedditListingWrapper:
     def next_no_repeat_download(self):
         """{self}`.next_no_repeat()` while downloading the submisson's
         image."""
-        post = self.next_download()
-
-        if post.path in self.existing_paths:
+        try:
+            return self.next_no_repeat().download()
+        except ValueError as error:
             return self.next_no_repeat_download()
-        else:
-            return post
 
     def flags_next_download(self, flags):
         """Download the next submission's image according to the specified

@@ -17,9 +17,6 @@ class RedditFlags(enum.Flag):
     NO_REPEAT = enum.auto()
 
 
-FAIL = RedditFlags.FAIL
-ALL = RedditFlags.ALL
-NEW = RedditFlags.NEW
-NO_REPEAT = RedditFlags.NO_REPEAT
-
-__all__ = list(RedditFlags.__members__.keys())
+_members = RedditFlags.__members__
+globals().update(_members)
+__all__ = list(_members.keys())
