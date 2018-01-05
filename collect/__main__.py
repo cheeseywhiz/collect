@@ -137,6 +137,7 @@ class CollectParser(argparse.ArgumentParser):
             path = subcommand_func(args)
 
             if path is not None:
+                Logger.info('File: %s', path)
                 print(path)
             elif args.subcommand != 'clear':
                 args.exit = 1

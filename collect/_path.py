@@ -273,7 +273,7 @@ class Path(PathBase):
         for file in self:
             file.remove()
 
-    def mkdir(self, mode=0o777, *, exist_ok=False, dir_fd=None):
+    def mkdir(self, mode=0o751, *, exist_ok=False, dir_fd=None):
         """Make a directory exist under {self}."""
         if exist_ok and self.exists():
             return
@@ -283,7 +283,7 @@ class Path(PathBase):
     @property
     def parent(self):
         """Move up one directory."""
-        return self / '..'
+        return os.path.dirname(self)
 
     @property
     def type(self):

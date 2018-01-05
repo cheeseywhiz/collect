@@ -193,7 +193,6 @@ class RedditListingWrapper:
             post.log()
             image_path = post.path
 
-        Logger.info('File: %s', image_path)
         return image_path
 
     def __repr__(self):

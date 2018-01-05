@@ -387,7 +387,7 @@ Remove each file within [`self`](#collectpath) (a directory).
 *Method of class [collect.Path](#collectpath)*
 
 ```python
-collect.Path.mkdir(self, mode=511, *, exist_ok=False, dir_fd=None)
+collect.Path.mkdir(self, mode=489, *, exist_ok=False, dir_fd=None)
 ```
 
 Make a directory exist under [`self`](#collectpath).
